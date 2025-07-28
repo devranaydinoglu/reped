@@ -14,11 +14,15 @@ A gap buffer is a data structure which is commonly used in text editors to repre
 
 Since Reped is a collaborative text editor with multiple clients modifying the document, text is inserted and deleted throughout the document in different locations. This makes the gap buffer not ideal when receiving operations from multiple clients that need to be applied to a local document.
 
+<img width="417" height="208" alt="Screenshot 2025-07-27 at 12 32 06" src="https://github.com/user-attachments/assets/effc7026-f5c3-4979-9c56-cff5afc23cbe" />
+
 ### Rope
 
 A rope data structure is a binary tree where each leaf is immutable and holds a text segment and its length as the weight. Parent nodes hold the sum of the lengths of all the leaves in its left subtree.
 
 Reped applies insertions and deletions per character. This means that it has to update the text buffer frequently. Insertions and deletions in a rope can require splitting the tree, rebalancing the tree, and reconstructing new subtrees. It's more efficient than a gap buffer but there is still room for improvement.
+
+<img width="452" height="208" alt="Screenshot 2025-07-27 at 12 36 24" src="https://github.com/user-attachments/assets/03ab6cb9-c195-40a9-9f6b-53580ebdf96d" />
 
 ### Piece Table
 
@@ -29,3 +33,5 @@ A piece table row can be referred to as a (piece) descriptor and acts as a point
 A deletion involves splitting a span into two spans. One of the span points to the items in the old span up to the deleted item and the other span points to the items after the deleted item. When a deleted item is at the start or end of a span, the start index or length in the piece descriptor is adjusted.
 
 An insertion is handled by splitting the span into three spans. The first span points to the items of the old span up to the inserted item. The third span points to the items of the old span after the inserted item. The inserted item is appended to the end of the add buffer file and the second span points to the inserted item. It's also possible to combine multiple insertions in succession into a single span.
+
+<img width="640" height="291" alt="Screenshot 2025-07-27 at 12 38 03" src="https://github.com/user-attachments/assets/488722eb-ea58-4cce-b300-ba6703e968d3" />
