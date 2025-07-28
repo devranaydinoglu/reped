@@ -8,15 +8,15 @@
 
 class Server {
 private:
-    const uint16_t PORT = 8080;
-    int socketFd = 0;
+    const uint16_t port;
+    int socketFd;
     std::vector<int> clientSockets;
     std::mutex clientsMutex;
     std::atomic<bool> running;
     std::thread acceptThread;
 
 public:
-    Server();
+    Server(const uint16_t port);
     ~Server();
 
 private:

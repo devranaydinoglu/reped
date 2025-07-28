@@ -7,8 +7,8 @@
 #include <netdb.h>
 #include <string.h>
 
-Server::Server()
-    : running(false)
+Server::Server(const uint16_t port)
+    : port(port), socketFd(0), running(false)
 {
     start();
 }
@@ -29,7 +29,7 @@ void Server::start()
     struct addrinfo* serverInfo;
     struct addrinfo* info;
 
-    if (int status = getaddrinfo(NULL, std::to_string(PORT).c_str(), &hints, &serverInfo) != 0)
+    if (int status = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &serverInfo) != 0)
     {
         std::cerr << "Failed to get server info: " << gai_strerror(status) << std::endl;
         return;
@@ -42,9 +42,8 @@ void Server::start()
         if (socketFd == -1)
             continue;
 
-        // Allow reuse of the port
-        int yes = 1;
-        if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
+        int reuse = 1;
+        if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
         {
             std::cerr << "Failed to set socket options\n";
             close(socketFd);
@@ -52,7 +51,7 @@ void Server::start()
         }
 
         if (bind(socketFd, info->ai_addr, info->ai_addrlen) == 0)
-            break; // Success
+            break;
 
         close(socketFd);
     }
@@ -73,7 +72,7 @@ void Server::start()
 
     running = true;
     acceptThread = std::thread(&Server::acceptClients, this);
-    std::cout << "Server started on port " << PORT << "\n";
+    std::cout << "Server started on port " << port << "\n";
 }
 
 void Server::stop()
