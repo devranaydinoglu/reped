@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdint.h>
 #include <string>
 #include <thread>
@@ -7,14 +8,15 @@
 
 class Client {
 private:
-    const uint16_t PORT = 8080;
-    int socketFd = 0;
-    std::thread receiveThread;
+    const uint16_t port;
+    const std::string serverAddress;
+    int socketFd;
     std::atomic<bool> running;
+    std::thread receiveThread;
     std::function<void(const std::string&)> onMessageReceived;
 
 public:
-    Client(const std::string& serverAddress = "localhost");
+    Client(const uint16_t port, const std::string& serverAddress);
     ~Client();
 
     [[nodiscard]] bool isConnected() const;
@@ -31,7 +33,7 @@ public:
     void setMessageReceivedCallback(std::function<void(const std::string&)> callback);
 
 private:
-    void connect(const std::string& serverAddress);
+    void connect();
     void disconnect();
 
     /**

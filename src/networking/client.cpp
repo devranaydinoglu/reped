@@ -1,4 +1,3 @@
-#include "client.h"
 #include <iostream>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -7,10 +6,17 @@
 #include <netdb.h>
 #include <string.h>
 
-Client::Client(const std::string& serverAddress)
-    : running(false)
+#include "client.h"
+
+Client::Client(const uint16_t port, const std::string& serverAddress)
+    : port(port), serverAddress(serverAddress), socketFd(0), running(false)
 {
-    connect(serverAddress);
+    connect();
+
+    setMessageReceivedCallback([](const std::string& message)
+    {
+        std::cout << "Received: " << message << "\n";
+    });
 }
 
 Client::~Client()
@@ -18,7 +24,7 @@ Client::~Client()
     disconnect();
 }
 
-void Client::connect(const std::string& serverAddress)
+void Client::connect()
 {
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
@@ -27,7 +33,7 @@ void Client::connect(const std::string& serverAddress)
 
     struct addrinfo* serverInfo;
 
-    if (int status = getaddrinfo(serverAddress.c_str(), std::to_string(PORT).c_str(), &hints, &serverInfo) != 0)
+    if (int status = getaddrinfo(serverAddress.c_str(), std::to_string(port).c_str(), &hints, &serverInfo) != 0)
     {
         std::cerr << "Failed to get server info: " << gai_strerror(status) << "\n";
         return;
@@ -44,6 +50,7 @@ void Client::connect(const std::string& serverAddress)
         {
             running = true;
             receiveThread = std::thread(&Client::receiveMessages, this);
+            std::cout << "Client started on port " << port << " and connected to server at " << serverAddress << "\n";
             break;
         }
 
