@@ -7,8 +7,8 @@
 #include <netdb.h>
 #include <string.h>
 
-Server::Server(const uint16_t port)
-    : port(port), socketFd(0), running(false)
+Server::Server(const uint16_t port, const std::string& bindAddress)
+    : port(port), bindAddress(bindAddress), socketFd(0), running(false)
 {
     start();
 }
@@ -29,7 +29,7 @@ void Server::start()
     struct addrinfo* serverInfo;
     struct addrinfo* info;
 
-    if (int status = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &serverInfo) != 0)
+    if (int status = getaddrinfo(bindAddress.c_str(), std::to_string(port).c_str(), &hints, &serverInfo) != 0)
     {
         std::cerr << "Failed to get server info: " << gai_strerror(status) << std::endl;
         return;
@@ -72,7 +72,7 @@ void Server::start()
 
     running = true;
     acceptThread = std::thread(&Server::acceptClients, this);
-    std::cout << "Server started on port " << port << "\n";
+    std::cout << "Server started on port " << port << " at address " << bindAddress << "\n";
 }
 
 void Server::stop()

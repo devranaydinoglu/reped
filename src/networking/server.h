@@ -9,6 +9,7 @@
 class Server {
 private:
     const uint16_t port;
+    const std::string bindAddress;
     int socketFd;
     std::vector<int> clientSockets;
     std::mutex clientsMutex;
@@ -16,7 +17,7 @@ private:
     std::thread acceptThread;
 
 public:
-    Server(const uint16_t port);
+    Server(const uint16_t port, const std::string& bindAddress);
     ~Server();
 
 private:

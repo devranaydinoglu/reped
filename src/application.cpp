@@ -19,10 +19,10 @@ void Application::onSetupCompleted(AppMode appMode, const uint16_t port, const s
     switch (appMode)
     {
         case AppMode::CLIENT:
-            client = std::move(std::make_unique<Client>(port, serverAddress));
+            client = std::make_unique<Client>(port, serverAddress);
             break;
         case AppMode::SERVER:
-            server = std::make_unique<Server>(port);
+            server = std::make_unique<Server>(port, serverAddress);
             break;
         default:
             return;
