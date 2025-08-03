@@ -12,6 +12,9 @@ set(SOURCES
     src/networking/client.cpp
     src/ui/window.cpp
     src/ui/setup_window.cpp
+    src/ui/editor.cpp
+    src/piece_table/piece_table.cpp
+    src/piece_table/piece.cpp
 )
 
 find_package(SDL3 REQUIRED)
@@ -27,6 +30,8 @@ set(IMGUI_SOURCES
     ${IMGUI_PATH}/imgui_demo.cpp
 )
 
+enable_testing()
+
 add_executable(${PROJECT_NAME} 
     ${SOURCES}
     ${IMGUI_SOURCES}
@@ -36,8 +41,26 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${IMGUI_PATH}
 )
 
-find_library(OpenGL_FRAMEWORK OpenGL)
+find_package(OpenGL REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     SDL3::SDL3
-    ${OpenGL_FRAMEWORK}
+    OpenGL::GL
+)
+
+##### TESTING #####
+
+set(HEADERS
+    src/piece_table/piece_table.h
+)
+
+add_subdirectory(tests)
+
+add_library(reped_lib STATIC ${SOURCES} ${HEADERS})
+target_include_directories(reped_lib PUBLIC
+    src/piece_table
+    ${IMGUI_PATH}
+)
+target_link_libraries(reped_lib PUBLIC
+    SDL3::SDL3
+    OpenGL::GL
 )
