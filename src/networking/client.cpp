@@ -30,7 +30,6 @@ void Client::connect()
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-
     struct addrinfo* serverInfo;
 
     if (int status = getaddrinfo(serverAddress.c_str(), std::to_string(port).c_str(), &hints, &serverInfo) != 0)
@@ -39,6 +38,7 @@ void Client::connect()
         return;
     }
     
+    bool connected = false;
     for (struct addrinfo* info = serverInfo; info != nullptr; info = info->ai_next)
     {
         socketFd = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
@@ -51,13 +51,17 @@ void Client::connect()
             running = true;
             receiveThread = std::thread(&Client::receiveMessages, this);
             std::cout << "Client started on port " << port << " and connected to server at " << serverAddress << "\n";
+            connected = true;
             break;
         }
 
         close(socketFd);
     }
 
-    freeaddrinfo(serverInfo);
+    if (!connected)
+        std::cerr << "Failed to connect to server at " << serverAddress << ":" << port << " - no server listening\n";
+    
+        freeaddrinfo(serverInfo);
 }
 
 void Client::disconnect()
