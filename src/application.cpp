@@ -6,7 +6,7 @@
 Application::Application()
     : client(nullptr), server(nullptr)
 {
-    window.setOnAppModeSelectedCallback([this] (AppMode appMode, const uint16_t port, const std::string& serverAddress)
+    window.setOnSetupCompletedCallback([this] (AppMode appMode, const uint16_t port, const std::string& serverAddress)
     {
         this->onSetupCompleted(appMode, port, serverAddress);
     });
@@ -18,13 +18,15 @@ void Application::onSetupCompleted(AppMode appMode, const uint16_t port, const s
 {
     switch (appMode)
     {
-    case AppMode::CLIENT:
-        client = std::move(std::make_unique<Client>(port, serverAddress));
-        break;
-    case AppMode::SERVER:
-        server = std::make_unique<Server>(port);
-        break;
-    default:
-        break;
+        case AppMode::CLIENT:
+            client = std::move(std::make_unique<Client>(port, serverAddress));
+            break;
+        case AppMode::SERVER:
+            server = std::make_unique<Server>(port);
+            break;
+        default:
+            return;
     }
+
+    window.onSetupCompleted();
 }

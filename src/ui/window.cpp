@@ -7,7 +7,7 @@
 #include "setup_window.h"
 
 Window::Window()
-    : openSetupWindow(true)
+    : openSetupWindow(true), openEditor(false)
 {
 
 }
@@ -139,7 +139,11 @@ void Window::render()
         if (showWindow)
             ImGui::ShowDemoWindow(&showWindow);
 
-        setupWindow.showSetupWindow(&openSetupWindow);
+        if (openSetupWindow)
+            setupWindow.showSetupWindow(&openSetupWindow);
+        
+        if (openEditor)
+            editor.showEditor(&openEditor);
 
         // Rendering
         ImGui::Render();
@@ -164,4 +168,10 @@ void Window::render()
     SDL_Quit();
 
     return;
+}
+
+void Window::onSetupCompleted()
+{
+    openEditor = true;
+    openSetupWindow = false;
 }
