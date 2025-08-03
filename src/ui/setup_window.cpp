@@ -7,8 +7,8 @@
 #include "../application.h"
 
 SetupWindow::SetupWindow()
+    : inputId(""), inputPort("8080"), inputAddress("localhost")
 {
-
 }
 
 void SetupWindow::showSetupWindow(bool* open)
@@ -27,10 +27,6 @@ void SetupWindow::showSetupWindow(bool* open)
 
     // Start of the window
     ImGui::Begin("Setup", open, windowFlags);
-
-    char inputId[20] = "";
-    char inputPort[6] = "8080";
-    char inputAddress[16] = "localhost";
 
     ImGuiStyle& style = ImGui::GetStyle();
     float labelWidth = 70.0f;
