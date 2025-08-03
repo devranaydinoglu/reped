@@ -28,9 +28,9 @@ Reped applies insertions and deletions per character. This means that it has to 
 
 A piece table works by having a buffer file containing the contents of the original, unchanged state of a text file. This buffer is read-only. Then there is a second "add" buffer file that is append-only, containing all the newly added text to the file in a session.
 
-A piece table row can be referred to as a (piece) descriptor and acts as a pointer to a span. A span is a string of items that is physically contiguous in a buffer and is also logically contiguous in the text sequence. A descriptor consists of three columns: the buffer, start index of the text segment in the buffer, length of the text segment in the buffer. When a file is opened intially, there is only one descriptor which points to the entire original buffer.
+A piece table row can be referred to as a piece and acts as a pointer to a span. A span is a string of items that is physically contiguous in a buffer and is also logically contiguous in the text sequence. A piece consists of three columns: the buffer, start index of the text segment in the buffer, length of the text segment in the buffer. When a file is opened intially, there is only one piece which points to the entire original buffer.
 
-A deletion involves splitting a span into two spans. One of the span points to the items in the old span up to the deleted item and the other span points to the items after the deleted item. When a deleted item is at the start or end of a span, the start index or length in the piece descriptor is adjusted.
+A deletion involves splitting a span into two spans. One of the spans points to the items in the old span up to the deleted item and the other span points to the items after the deleted item. When a deleted item is at the start or end of a span, the start index or length in the piece is adjusted.
 
 An insertion is handled by splitting the span into three spans. The first span points to the items of the old span up to the inserted item. The third span points to the items of the old span after the inserted item. The inserted item is appended to the end of the add buffer file and the second span points to the inserted item. It's also possible to combine multiple insertions in succession into a single span.
 
