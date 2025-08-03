@@ -8,15 +8,12 @@
 
 SetupWindow::SetupWindow()
 {
-    // bool showWindow = true;
-    // showSetupWindow(&showWindow);
+
 }
 
 void SetupWindow::showSetupWindow(bool* open)
 {
     IMGUI_CHECKVERSION();
-
-    open = NULL;
 
     ImGuiWindowFlags windowFlags = 0;
     windowFlags |= ImGuiWindowFlags_NoScrollbar;
