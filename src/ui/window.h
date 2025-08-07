@@ -1,9 +1,9 @@
 #pragma once
 
-#include <memory>
-
 #include "setup_window.h"
 #include "editor.h"
+
+class Controller;
 
 class Window
 {
@@ -21,6 +21,11 @@ public:
     void setOnSetupCompletedCallback(SetupWindow::SetupCompletedCallback callback)
     {
         setupWindow.setOnSetupCompletedCallback(std::move(callback));
+    }
+    
+    void setEditorController(Controller* controller)
+    {
+        editor.setController(controller);
     }
 
     void onSetupCompleted();
