@@ -2,8 +2,6 @@
 
 #include "imgui.h"
 #include "setup_window.h"
-#include "../networking/server.h"
-#include "../networking/client.h"
 #include "../application.h"
 
 SetupWindow::SetupWindow()
