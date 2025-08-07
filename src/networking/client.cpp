@@ -61,7 +61,7 @@ void Client::connect()
     if (!connected)
         std::cerr << "Failed to connect to server at " << serverAddress << ":" << port << " - no server listening\n";
     
-        freeaddrinfo(serverInfo);
+    freeaddrinfo(serverInfo);
 }
 
 void Client::disconnect()
