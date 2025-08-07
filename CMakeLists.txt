@@ -15,6 +15,8 @@ set(SOURCES
     src/ui/editor.cpp
     src/piece_table/piece_table.cpp
     src/piece_table/piece.cpp
+    src/controller/controller.cpp
+    src/text_engine/text_engine.cpp
 )
 
 find_package(SDL3 REQUIRED)
