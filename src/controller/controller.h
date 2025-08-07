@@ -1,0 +1,39 @@
+#pragma once
+
+#include <memory>
+#include <functional>
+
+class TextEngine;
+class Client;
+class Operation;
+class TextInputEvent;
+class CursorInputEvent;
+
+class Controller
+{
+private:
+    TextEngine* textEngine;
+    Client* client;
+    std::function<void(const std::string&)> onOperationProcessed;
+
+public:
+    Controller();
+    
+    void setTextEngine(TextEngine* engine) { textEngine = engine; }
+    void setClient(Client* client) { this->client = client; }
+    
+    int handleTextInputEvent(const TextInputEvent& event);
+    int handleCursorInputEvent(const CursorInputEvent& event);
+    std::string getText() const;
+    std::size_t getCursorPosition() const;
+    void setCursorPosition(std::size_t position);
+    
+    void setOnOperationProcessedCallback(std::function<void(const std::string&)> callback)
+    {
+        onOperationProcessed = std::move(callback);
+    }
+
+private:
+    void processOperation(std::unique_ptr<Operation> operation);
+    void sendOperationToClient(const Operation& operation);
+};
