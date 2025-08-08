@@ -6,19 +6,32 @@ TextEngine::TextEngine()
 {
 }
 
-void TextEngine::insertChar(InsertOperation* insertOp)
+void TextEngine::insertCharLocal(InsertOperation* insertOp)
 {
     std::string charStr(1, insertOp->character);
     textBuffer.insert(charStr, insertOp->index);
     cursorPosition = insertOp->index + 1;
 }
 
-void TextEngine::deleteChar(DeleteOperation* deleteOp)
+void TextEngine::insertCharIncoming(InsertOperation *insertOp)
 {
-    if (deleteOp->index > 0) {
+    std::string charStr(1, insertOp->character);
+    textBuffer.insert(charStr, insertOp->index);
+}
+
+void TextEngine::deleteCharLocal(DeleteOperation* deleteOp)
+{
+    if (deleteOp->index > 0)
+    {
         textBuffer.remove(deleteOp->index - 1, deleteOp->index);
         cursorPosition = deleteOp->index - 1;
     }
+}
+
+void TextEngine::deleteCharIncoming(DeleteOperation *deleteOp)
+{
+    if (deleteOp->index > 0)
+        textBuffer.remove(deleteOp->index - 1, deleteOp->index);
 }
 
 void TextEngine::setCursorPosition(std::size_t position)
