@@ -6,11 +6,10 @@
 #include "./controller/controller.h"
 
 Application::Application()
-    : client(nullptr), server(nullptr), textEngine(std::make_unique<TextEngine>()), 
-        controller(std::make_unique<Controller>())
+    : client(nullptr), server(nullptr), controller(std::make_unique<Controller>()),
+        textEngine(std::make_unique<TextEngine>()) 
 {
     controller->setTextEngine(textEngine.get());
-    
     
     // Setup window callbacks
     window.setOnSetupCompletedCallback([this] (AppMode appMode, const uint16_t port, const std::string& serverAddress)
@@ -18,7 +17,6 @@ Application::Application()
         this->onSetupCompleted(appMode, port, serverAddress);
     });
     
-
     window.setEditorController(controller.get());
 
     window.render();
@@ -29,7 +27,7 @@ void Application::onSetupCompleted(AppMode appMode, const uint16_t port, const s
     switch (appMode)
     {
         case AppMode::CLIENT:
-            client = std::make_unique<Client>(port, serverAddress);
+            client = std::make_unique<Client>(port, serverAddress, controller.get());
             controller->setClient(client.get());
             break;
         case AppMode::SERVER:
