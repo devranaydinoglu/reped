@@ -3,8 +3,6 @@
 #include "../controller/controller.h"
 #include "../text_engine/input_events.h"
 
-#include <iostream>
-
 Editor::Editor()
     : controller(nullptr), cursorLastMovedTime(0.0f)
 {
@@ -146,16 +144,10 @@ void Editor::showEditor(bool* open)
         numCharsRendered += lineBuffer.size();
     }
 
-    for (auto s : lineStartOffsets)
-        std::cout << "Off: " << s << "\n";
-
     // Cursor line/column
     auto it = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), cursorPos);
     size_t cursorLine = std::distance(lineStartOffsets.begin(), it) - 1;
     size_t cursorColumn = cursorPos - lineStartOffsets[cursorLine];
-
-    std::cout << "Cursor line: " << cursorLine << "\n";
-    std::cout << "Cursor column: " << cursorColumn << "\n";
 
     float visualCursorX = baseX + cursorColumn * charWidth;
     float visualCursorY = baseY + cursorLine * lineHeight;
