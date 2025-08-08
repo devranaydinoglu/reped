@@ -20,6 +20,7 @@ public:
 public:
     virtual ~Operation() = default;
     virtual std::string serialize() const = 0;
+    static std::unique_ptr<Operation> deserialize(const std::string& message);
 };
 
 class InsertOperation : public Operation
