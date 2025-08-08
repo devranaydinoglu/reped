@@ -11,10 +11,9 @@ class CursorInputEvent;
 
 class Controller
 {
-private:
+public:
     TextEngine* textEngine;
     Client* client;
-    std::function<void(const std::string&)> onOperationProcessed;
 
 public:
     Controller();
@@ -27,13 +26,9 @@ public:
     std::string getText() const;
     std::size_t getCursorPosition() const;
     void setCursorPosition(std::size_t position);
-    
-    void setOnOperationProcessedCallback(std::function<void(const std::string&)> callback)
-    {
-        onOperationProcessed = std::move(callback);
-    }
+    void processIncomingMessage(const std::string& message);
 
 private:
-    void processOperation(std::unique_ptr<Operation> operation);
+    void processLocalOperation(std::unique_ptr<Operation> operation);
     void sendOperationToClient(const Operation& operation);
 };
