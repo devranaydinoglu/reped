@@ -7,16 +7,13 @@
 #include <string.h>
 
 #include "client.h"
+#include "../controller/controller.h"
 
-Client::Client(const uint16_t port, const std::string& serverAddress)
-    : port(port), serverAddress(serverAddress), socketFd(0), running(false)
+Client::Client(const uint16_t port, const std::string& serverAddress, Controller* controller)
+    : port(port), serverAddress(serverAddress), socketFd(0), running(false), controller(nullptr)
 {
     connect();
-
-    setMessageReceivedCallback([](const std::string& message)
-    {
-        std::cout << "Received: " << message << "\n";
-    });
+    this->controller = controller;
 }
 
 Client::~Client()
@@ -90,11 +87,6 @@ bool Client::sendMessage(const std::string& message)
     return bytesSent == static_cast<ssize_t>(message.length());
 }
 
-void Client::setMessageReceivedCallback(std::function<void(const std::string&)> callback)
-{
-    onMessageReceived = std::move(callback);
-}
-
 void Client::receiveMessages()
 {
     char buffer[4096];
@@ -112,7 +104,7 @@ void Client::receiveMessages()
         buffer[bytesReceived] = '\0';
         std::string message(buffer);
         
-        if (onMessageReceived)
-            onMessageReceived(message);
+        std::cout << "Received: " << message << "\n";
+        controller->processIncomingMessage(message);
     }
 }

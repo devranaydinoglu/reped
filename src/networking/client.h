@@ -6,17 +6,20 @@
 #include <atomic>
 #include <functional>
 
-class Client {
+class Controller;
+
+class Client
+{
 private:
     const uint16_t port;
     const std::string serverAddress;
     int socketFd;
     std::atomic<bool> running;
     std::thread receiveThread;
-    std::function<void(const std::string&)> onMessageReceived;
+    Controller* controller;
 
 public:
-    Client(const uint16_t port, const std::string& serverAddress);
+    Client(const uint16_t port, const std::string& serverAddress, Controller* controller);
     ~Client();
 
     [[nodiscard]] bool isConnected() const;
@@ -26,11 +29,6 @@ public:
      * @returns True if the entire message was sent successfully.
     */
     [[nodiscard]] bool sendMessage(const std::string& message);
-
-    /**
-     * Sets a callback function that will be called whenever a message is received from the server.
-    */
-    void setMessageReceivedCallback(std::function<void(const std::string&)> callback);
 
 private:
     void connect();
