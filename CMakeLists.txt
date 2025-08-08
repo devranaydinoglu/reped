@@ -17,6 +17,7 @@ set(SOURCES
     src/piece_table/piece.cpp
     src/controller/controller.cpp
     src/text_engine/text_engine.cpp
+    src/text_engine/operations.cpp
 )
 
 find_package(SDL3 REQUIRED)
