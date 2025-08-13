@@ -7,10 +7,10 @@ enum class AppMode;
 class SetupWindow
 {
 public:
-    using SetupCompletedCallback = std::function<void(AppMode appMode, const uint16_t port, const std::string& serverAddress)>;
+    using SetupCompletedCallback = std::function<void(AppMode appMode, const uint16_t port, const std::string& serverAddress, const std::string& clientId)>;
 
 private:
-    char inputId[20];
+    char inputClientId[20];
     char inputPort[6];
     char inputAddress[18];
 

@@ -5,7 +5,7 @@
 #include "../application.h"
 
 SetupWindow::SetupWindow()
-    : inputId(""), inputPort("8080"), inputAddress("localhost")
+    : inputClientId(""), inputPort("8080"), inputAddress("localhost")
 {
 }
 
@@ -45,8 +45,8 @@ void SetupWindow::showSetupWindow(bool* open)
         ImGui::TableSetupColumn("Input", ImGuiTableColumnFlags_WidthFixed, inputWidth);
 
         ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0); ImGui::Text("Id");
-        ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(inputWidth); ImGui::InputText("##Id", inputId, IM_ARRAYSIZE(inputId));
+        ImGui::TableSetColumnIndex(0); ImGui::Text("ClientId");
+        ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(inputWidth); ImGui::InputText("##ClientId", inputClientId, IM_ARRAYSIZE(inputClientId));
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0); ImGui::Text("Port");
@@ -73,13 +73,13 @@ void SetupWindow::showSetupWindow(bool* open)
     if (ImGui::Button("Create Server"))
     {
         if (setupCompletedCallback)
-            setupCompletedCallback(AppMode::SERVER, std::stoi(inputPort), inputAddress);
+            setupCompletedCallback(AppMode::SERVER, std::stoi(inputPort), inputAddress, "");
     }
     ImGui::SameLine();
     if (ImGui::Button("Connect As Client"))
     {
         if (setupCompletedCallback)
-            setupCompletedCallback(AppMode::CLIENT, std::stoi(inputPort), inputAddress);
+            setupCompletedCallback(AppMode::CLIENT, std::stoi(inputPort), inputAddress, std::string(inputClientId));
     }
 
     ImGui::EndChild();
