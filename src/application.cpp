@@ -6,7 +6,7 @@
 #include "./controller/controller.h"
 
 Application::Application()
-    : client(nullptr), server(nullptr), controller(std::make_unique<Controller>(this)),
+    : client(nullptr), server(nullptr), controller(std::make_unique<Controller>()),
         textEngine(std::make_unique<TextEngine>()), clientId("")
 {
     controller->textEngine = textEngine.get();
@@ -30,7 +30,7 @@ void Application::onSetupCompleted(AppMode appMode, const uint16_t port, const s
     switch (appMode)
     {
         case AppMode::CLIENT:
-            client = std::make_unique<Client>(port, serverAddress, controller.get());
+            client = std::make_unique<Client>(port, serverAddress, controller.get(), clientId);
             controller->client = client.get();
             break;
         case AppMode::SERVER:
