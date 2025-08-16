@@ -6,32 +6,33 @@ TextEngine::TextEngine()
 {
 }
 
-void TextEngine::insertCharLocal(InsertOperation* insertOp)
+void TextEngine::insertLocal(InsertOperation* insertOp)
 {
-    std::string charStr(1, insertOp->character);
-    textBuffer.insert(charStr, insertOp->index);
-    cursorPosition = insertOp->index + 1;
+    // Apply operation locally (optimistic update)
+    textBuffer.insert(insertOp->text, insertOp->pos);
+    cursorPosition = insertOp->pos + insertOp->text.size();
 }
 
-void TextEngine::insertCharIncoming(InsertOperation *insertOp)
+void TextEngine::insertIncoming(InsertOperation* insertOp)
 {
-    std::string charStr(1, insertOp->character);
-    textBuffer.insert(charStr, insertOp->index);
+    textBuffer.insert(insertOp->text, insertOp->pos);
 }
 
-void TextEngine::deleteCharLocal(DeleteOperation* deleteOp)
+void TextEngine::deleteLocal(DeleteOperation* deleteOp)
 {
-    if (deleteOp->index > 0)
+    if (deleteOp->length > 0 && deleteOp->pos >= 0 && deleteOp->pos < textBuffer.getText().length())
     {
-        textBuffer.remove(deleteOp->index - 1, deleteOp->index);
-        cursorPosition = deleteOp->index - 1;
+        textBuffer.remove(deleteOp->pos, deleteOp->pos + deleteOp->length);
+        cursorPosition = deleteOp->pos;
     }
 }
 
-void TextEngine::deleteCharIncoming(DeleteOperation *deleteOp)
-{
-    if (deleteOp->index > 0)
-        textBuffer.remove(deleteOp->index - 1, deleteOp->index);
+void TextEngine::deleteIncoming(DeleteOperation* deleteOp)
+{    
+    if (deleteOp->length > 0 && deleteOp->pos >= 0 && deleteOp->pos < textBuffer.getText().length())
+    {
+        textBuffer.remove(deleteOp->pos, deleteOp->pos + deleteOp->length);
+    }
 }
 
 void TextEngine::setCursorPosition(std::size_t position)

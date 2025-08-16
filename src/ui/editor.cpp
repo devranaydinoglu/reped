@@ -47,16 +47,22 @@ void Editor::showEditor(bool* open)
     // INPUT HANDLING
     if (editorIsActive)
     {
+        std::string insertedText;
         for (int i = 0; i < io.InputQueueCharacters.Size; ++i)
         {
             ImWchar c = io.InputQueueCharacters[i];
             if (c >= 32 && c != 127) // Printable ASCII
             {
-                controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, c, cursorPos));
-                controller->handleCursorInputEvent(CursorInputEvent(cursorPos + 1));
-                cursorPos = controller->getCursorPosition();
-                cursorLastMovedTime = ImGui::GetTime();
+                insertedText.push_back(c);
             }
+        }
+
+        if (!insertedText.empty())
+        {
+            controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, insertedText, cursorPos));
+            controller->handleCursorInputEvent(CursorInputEvent(cursorPos + insertedText.size()));
+            cursorPos = controller->getCursorPosition();
+            cursorLastMovedTime = ImGui::GetTime();
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && cursorPos > 0)
@@ -95,7 +101,7 @@ void Editor::showEditor(bool* open)
 
         if (ImGui::IsKeyPressed(ImGuiKey_Backspace) && cursorPos > 0)
         {
-            controller->handleTextInputEvent(TextInputEvent(TextInputEventType::DELETE, '\0', cursorPos));
+            controller->handleTextInputEvent(TextInputEvent(TextInputEventType::DELETE, "\0", cursorPos - 1));
             controller->handleCursorInputEvent(CursorInputEvent(cursorPos - 1));
             cursorPos = controller->getCursorPosition();
             cursorLastMovedTime = ImGui::GetTime();
@@ -103,7 +109,7 @@ void Editor::showEditor(bool* open)
 
         if (ImGui::IsKeyPressed(ImGuiKey_Enter))
         {
-            controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, '\n', cursorPos));
+            controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, "\n", cursorPos));
             controller->handleCursorInputEvent(CursorInputEvent(cursorPos + 1));
             cursorPos = controller->getCursorPosition();
             cursorLastMovedTime = ImGui::GetTime();

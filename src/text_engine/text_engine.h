@@ -16,10 +16,10 @@ private:
 
 public:
     TextEngine();
-    void insertCharLocal(InsertOperation* insertOp);
-    void insertCharIncoming(InsertOperation* insertOp);
-    void deleteCharLocal(DeleteOperation* deleteOp);
-    void deleteCharIncoming(DeleteOperation* deleteOp);
+    void insertLocal(InsertOperation* insertOp);
+    void insertIncoming(InsertOperation* insertOp);
+    void deleteLocal(DeleteOperation* deleteOp);
+    void deleteIncoming(DeleteOperation* deleteOp);
     void setCursorPosition(std::size_t position);
     std::size_t getCursorPosition() const { return cursorPosition; }
     std::string getText() const;
