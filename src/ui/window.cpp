@@ -117,7 +117,28 @@ void Window::render()
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            ImGui_ImplSDL3_ProcessEvent(&event);
+            // Handle editor input before ImGui processes it
+            bool eventHandled = false;
+            
+            if (openEditor)
+            {
+                if (event.type == SDL_EVENT_TEXT_INPUT)
+                {
+                    editor.handleTextInput(event.text.text);
+                    eventHandled = true; // Don't pass to ImGui
+                }
+                else if (event.type == SDL_EVENT_KEY_DOWN)
+                {
+                    // Let ImGui handle special keys (arrows, backspace, etc.) but not text
+                    eventHandled = false;
+                }
+            }
+            
+            if (!eventHandled)
+            {
+                ImGui_ImplSDL3_ProcessEvent(&event);
+            }
+            
             if (event.type == SDL_EVENT_QUIT)
                 done = true;
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
@@ -144,7 +165,12 @@ void Window::render()
             setupWindow.showSetupWindow(&openSetupWindow);
         
         if (openEditor)
+        {
+            // Re-enable SDL text input when editor opens (in case ImGui disabled it)
+            SDL_StartTextInput(window);
+            
             editor.showEditor(&openEditor);
+        }
 
         // Rendering
         ImGui::Render();
@@ -173,6 +199,6 @@ void Window::render()
 
 void Window::onSetupCompleted()
 {
-    openEditor = true;
     openSetupWindow = false;
+    openEditor = true;
 }

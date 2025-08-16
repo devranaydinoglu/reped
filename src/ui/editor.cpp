@@ -47,23 +47,10 @@ void Editor::showEditor(bool* open)
     // INPUT HANDLING
     if (editorIsActive)
     {
-        std::string insertedText;
-        for (int i = 0; i < io.InputQueueCharacters.Size; ++i)
-        {
-            ImWchar c = io.InputQueueCharacters[i];
-            if (c >= 32 && c != 127) // Printable ASCII
-            {
-                insertedText.push_back(c);
-            }
-        }
-
-        if (!insertedText.empty())
-        {
-            controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, insertedText, cursorPos, insertedText.size()));
-            controller->handleCursorInputEvent(CursorInputEvent(cursorPos + insertedText.size()));
-            cursorPos = controller->getCursorPosition();
-            cursorLastMovedTime = ImGui::GetTime();
-        }
+        // Text input is handled via SDL events in handleTextInput()
+        // Only handle special keys here
+        size_t cursorPos = controller->getCursorPosition();
+        std::string text = controller->getText();
 
         if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && cursorPos > 0)
         {
@@ -171,4 +158,18 @@ void Editor::showEditor(bool* open)
     }
 
     ImGui::End();
+}
+
+void Editor::handleTextInput(const char* text)
+{
+    if (!controller || !text) return;
+    
+    std::string inputText(text);
+    if (!inputText.empty())
+    {
+        size_t cursorPos = controller->getCursorPosition();
+        controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, inputText, cursorPos, inputText.size()));
+        controller->handleCursorInputEvent(CursorInputEvent(cursorPos + inputText.size()));
+        cursorLastMovedTime = ImGui::GetTime();
+    }
 }

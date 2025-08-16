@@ -20,4 +20,5 @@ public:
     Editor();
     void showEditor(bool* open);
     void setController(Controller* controller) { this->controller = controller; }
+    void handleTextInput(const char* text);
 };
