@@ -45,16 +45,25 @@ void SetupWindow::showSetupWindow(bool* open)
         ImGui::TableSetupColumn("Input", ImGuiTableColumnFlags_WidthFixed, inputWidth);
 
         ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0); ImGui::Text("ClientId");
-        ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(inputWidth); ImGui::InputText("##ClientId", inputClientId, IM_ARRAYSIZE(inputClientId));
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("ClientId");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGui::InputText("##ClientId", inputClientId, IM_ARRAYSIZE(inputClientId));
 
         ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0); ImGui::Text("Port");
-        ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(inputWidth); ImGui::InputText("##Port", inputPort, IM_ARRAYSIZE(inputPort));
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Port");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGui::InputText("##Port", inputPort, IM_ARRAYSIZE(inputPort));
 
         ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0); ImGui::Text("Address");
-        ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(inputWidth); ImGui::InputText("##Address", inputAddress, IM_ARRAYSIZE(inputAddress));
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Address");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGui::InputText("##Address", inputAddress, IM_ARRAYSIZE(inputAddress));
 
         ImGui::EndTable();
     }
