@@ -15,7 +15,7 @@ class Operation
 {
 public:
     OperationType type;
-    std::size_t index;
+    std::size_t pos;
 
 public:
     virtual ~Operation() = default;
@@ -23,39 +23,51 @@ public:
     static std::unique_ptr<Operation> deserialize(const std::string& message);
 };
 
-class InsertOperation : public Operation
+class TextOperation : public Operation
 {
 public:
-    char character;
+    std::size_t length;
+    std::string clientId;
+    
+    TextOperation(std::string clientId)
+        : clientId(clientId) {}
+};
+
+class InsertOperation : public TextOperation
+{
+public:
+    std::string text;
 
 public:
-    InsertOperation(char c, std::size_t pos)
-        : character(c)
+    InsertOperation(std::string text, std::size_t pos, std::string clientId)
+        : TextOperation(clientId), text(text)
     {
-        index = pos;
+        this->pos = pos;
         type = OperationType::INSERT;
     }
     
     std::string serialize() const override
     {
-        std::cout << "INSERT:" << index << ":" << character << "\n";
-        return "INSERT:" + std::to_string(index) + ":" + character;
+        std::cout << "INSERT:" << clientId << ":" << pos << ":" << text << "\n";
+        return "INSERT:" + clientId + ":" + std::to_string(pos) + ":" + text;
     }
 };
 
-class DeleteOperation : public Operation
+class DeleteOperation : public TextOperation
 {
 public:
-    DeleteOperation(std::size_t pos)
+    DeleteOperation(std::size_t pos, std::size_t length, std::string clientId)
+        : TextOperation(clientId)
     {
-        index = pos;
+        this->pos = pos;
+        this->length = length;
         type = OperationType::DELETE;
     }
     
     std::string serialize() const override
     {
-        std::cout << "DELETE:" << index << "\n";
-        return "DELETE:" + std::to_string(index);
+        std::cout << "DELETE:" << clientId << ":" << pos << ":" << length << "\n";
+        return "DELETE:" + clientId + ":" + std::to_string(pos) + ":" + std::to_string(length);
     }
 };
 
@@ -64,13 +76,13 @@ class CursorMoveOperation : public Operation
 public:
     CursorMoveOperation(std::size_t pos)
     {
-        index = pos;
+        this->pos = pos;
         type = OperationType::CURSOR_MOVE;
     }
     
     std::string serialize() const override
     {
-        std::cout << "CURSOR:" << index << "\n";
-        return "CURSOR:" + std::to_string(index);
+        std::cout << "CURSOR:" << pos << "\n";
+        return "CURSOR:" + std::to_string(pos);
     }
 };

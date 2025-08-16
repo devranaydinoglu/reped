@@ -17,14 +17,14 @@ int Controller::handleTextInputEvent(const TextInputEvent& event)
     switch (event.type) {
         case TextInputEventType::INSERT:
         {
-            std::cout << "Controller: INSERT operation - char '" << event.character << "' at position " << event.index << "\n";
-            processLocalOperation(std::make_unique<InsertOperation>(event.character, event.index));
+            std::cout << "Controller: INSERT operation - text '" << event.text << "' at position " << event.pos << "\n";
+            processLocalOperation(std::make_unique<InsertOperation>(event.text, event.pos, "4"));
             break;
         }
         case TextInputEventType::DELETE:
         {
-            std::cout << "Controller: DELETE operation at position " << event.index << "\n";
-            processLocalOperation(std::make_unique<DeleteOperation>(event.index));
+            std::cout << "Controller: DELETE operation at position " << event.pos << "\n";
+            processLocalOperation(std::make_unique<DeleteOperation>(event.pos, event.length, "4"));
             break;
         }
         default: {
@@ -37,8 +37,8 @@ int Controller::handleTextInputEvent(const TextInputEvent& event)
 
 int Controller::handleCursorInputEvent(const CursorInputEvent& event)
 {
-    std::cout << "Controller: CURSOR_MOVE operation to position " << event.position << "\n";
-    processLocalOperation(std::make_unique<CursorMoveOperation>(event.position));
+    std::cout << "Controller: CURSOR_MOVE operation to position " << event.pos << "\n";
+    processLocalOperation(std::make_unique<CursorMoveOperation>(event.pos));
 
     return 0;
 }
@@ -56,21 +56,21 @@ void Controller::processLocalOperation(std::unique_ptr<Operation> operation)
         case OperationType::INSERT:
         {
             auto insertOp = static_cast<InsertOperation*>(operation.get());
-            textEngine->insertCharLocal(insertOp);
+            textEngine->insertLocal(insertOp);
             sendOperationToClient(*insertOp);
             break;
         }
         case OperationType::DELETE:
         {
             auto deleteOp = static_cast<DeleteOperation*>(operation.get());
-            textEngine->deleteCharLocal(deleteOp);
+            textEngine->deleteLocal(deleteOp);
             sendOperationToClient(*deleteOp);
             break;
         }
         case OperationType::CURSOR_MOVE:
         {
             auto cursorOp = static_cast<CursorMoveOperation*>(operation.get());
-            textEngine->setCursorPosition(cursorOp->index);
+            textEngine->setCursorPosition(cursorOp->pos);
             break;
         }
     }
@@ -127,13 +127,13 @@ void Controller::processIncomingMessage(const std::string &message)
         case OperationType::INSERT:
         {
             auto insertOp = static_cast<InsertOperation*>(operation.get());
-            textEngine->insertCharIncoming(insertOp);
+            textEngine->insertIncoming(insertOp);
             break;
         }
         case OperationType::DELETE:
         {
             auto deleteOp = static_cast<DeleteOperation*>(operation.get());
-            textEngine->deleteCharIncoming(deleteOp);
+            textEngine->deleteIncoming(deleteOp);
             break;
         }
         default:
