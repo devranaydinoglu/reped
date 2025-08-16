@@ -1,4 +1,3 @@
-#include "server.h"
 #include <iostream>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -6,9 +5,15 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <string.h>
+#include <memory>
+#include <sstream>
 
-Server::Server(const uint16_t port, const std::string& bindAddress)
-    : port(port), bindAddress(bindAddress), socketFd(0), running(false)
+#include "server.h"
+#include "../text_engine/operations.h"
+#include "../controller/controller.h"
+
+Server::Server(const uint16_t port, const std::string& bindAddress, Controller* controller)
+    : port(port), bindAddress(bindAddress), socketFd(0), running(false), controller(controller)
 {
     start();
 }
@@ -91,6 +96,7 @@ void Server::stop()
         close(clientSocket);
 
     clientSockets.clear();
+    clientIdMap.clear();
 }
 
 void Server::acceptClients()
@@ -116,7 +122,6 @@ void Server::acceptClients()
         }
 
         std::thread(&Server::handleClient, this, clientSocket).detach();
-        std::cout << "New client connected\n";
     }
 }
 
@@ -132,9 +137,23 @@ void Server::handleClient(int clientSocket)
             break;
 
         buffer[bytesReceived] = '\0';
-        std::string message(buffer);
+        std::string msg(buffer);
         
-        broadcastToClients(message, clientSocket);
+        ParsedMessage parsedMsg = parseMessage(msg);
+        
+        std::string displayClientId = parsedMsg.clientId;
+        if (displayClientId == "UNKNOWN")
+        {
+            // Fallback to stored mapping if not found in message
+            std::lock_guard<std::mutex> lock(clientsMutex);
+            auto it = clientIdMap.find(clientSocket);
+            if (it != clientIdMap.end())
+                displayClientId = it->second;
+        }
+        
+        std::cout << "Received from Client " << clientSocket << " (ID: " << displayClientId << "): " << msg << "\n";
+
+        handleParsedMessage(parsedMsg, clientSocket);
     }
 
     {
@@ -142,10 +161,11 @@ void Server::handleClient(int clientSocket)
         auto it = std::find(clientSockets.begin(), clientSockets.end(), clientSocket);
         if (it != clientSockets.end())
             clientSockets.erase(it);
+        
+        clientIdMap.erase(clientSocket);
     }
     
     close(clientSocket);
-    std::cout << "Client disconnected\n";
 }
 
 void Server::broadcastToClients(const std::string& message, int excludeSocket)
@@ -156,5 +176,89 @@ void Server::broadcastToClients(const std::string& message, int excludeSocket)
     {
         if (clientSocket != excludeSocket)
             send(clientSocket, message.c_str(), message.length(), 0);
+    }
+}
+
+ParsedMessage Server::parseMessage(const std::string& message)
+{
+    ParsedMessage parsed;
+
+    std::istringstream ss(message);
+    std::string token;
+
+    std::vector<std::string> parts;
+    while (std::getline(ss, token, ':'))
+        parts.push_back(token);
+
+    if (message.size() >= 10 && message.substr(0, 10) == "CONNECTED:")
+    {
+        parsed.type = MessageType::CONNECTED;
+        parsed.clientId = message.substr(10);
+        parsed.content = message;
+        return parsed;
+    }
+    
+    if (parts.size() >= 2)
+    {
+        if (parts[0] == "INSERT" || parts[0] == "DELETE")
+        {
+            parsed.type = MessageType::OPERATION;
+            parsed.clientId = parts[1];
+            parsed.content = message;
+            return parsed;
+        }
+    }
+    
+    // Default to unknown message type
+    parsed.type = MessageType::UNKNOWN;
+    parsed.clientId = "UNKNOWN";
+    parsed.content = message;
+    return parsed;
+}
+
+void Server::handleParsedMessage(const ParsedMessage& parsedMsg, int clientSocket)
+{
+    switch (parsedMsg.type)
+    {
+        case MessageType::CONNECTED:
+        {
+            {
+                std::lock_guard<std::mutex> lock(clientsMutex);
+                clientIdMap[clientSocket] = parsedMsg.clientId;
+            }
+            std::cout << "Client " << clientSocket << " connected with ID: " << parsedMsg.clientId << "\n";
+            break;
+        }
+            
+        case MessageType::OPERATION:
+        {
+            std::unique_ptr<Operation> operation = Operation::deserialize(parsedMsg.content);
+            if (!operation)
+            {
+                std::cerr << "Failed to deserialize operation: " << parsedMsg.content << " from client: " << parsedMsg.clientId << "\n";
+                return;
+            }
+
+            // Apply to authoritative document through controller
+            controller->processIncomingMessage(parsedMsg.content);
+
+            // Send acknowledgment back to the originating client
+            // if (operation->type == OperationType::INSERT || operation->type == OperationType::DELETE)
+            // {
+            //     auto* textOp = static_cast<TextOperation*>(operation.get());
+            //     std::string ackMessage = "ACK:" + textOp->clientId;
+                
+            //     // Send acknowledgment to originating client
+            //     send(clientSocket, ackMessage.c_str(), ackMessage.length(), 0);
+            //     std::cout << "Server: Sent acknowledgment " << ackMessage << " to client " << clientSocket << "\n";
+            // }
+
+            broadcastToClients(parsedMsg.content, clientSocket);
+            break;
+        }
+        
+        default:
+            std::cerr << "Unknown message type received from client " << clientSocket << "\n";
+            break;
     }
 }

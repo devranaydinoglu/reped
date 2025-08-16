@@ -1,23 +1,45 @@
 #pragma once
+
 #include <stdint.h>
 #include <vector>
 #include <string>
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <unordered_map>
+
+class Controller;
+
+enum class MessageType
+{
+    UNKNOWN,
+    CONNECTED,
+    OPERATION
+};
+
+struct ParsedMessage
+{
+    MessageType type;
+    std::string content;
+    std::string clientId; // For CONNECTED messages
+};
 
 class Server {
+public:
+    Controller* controller;
+
 private:
     const uint16_t port;
     const std::string bindAddress;
     int socketFd;
     std::vector<int> clientSockets;
+    std::unordered_map<int, std::string> clientIdMap;
     std::mutex clientsMutex;
     std::atomic<bool> running;
     std::thread acceptThread;
 
 public:
-    Server(const uint16_t port, const std::string& bindAddress);
+    Server(const uint16_t port, const std::string& bindAddress, Controller* controller);
     ~Server();
 
 private:
@@ -42,4 +64,7 @@ private:
      * @param excludeSocket Socket to exclude from broadcast (client sending the message).
     */
     void broadcastToClients(const std::string& message, int excludeSocket = -1);
+
+    ParsedMessage parseMessage(const std::string& message);
+    void handleParsedMessage(const ParsedMessage& parsedMsg, int clientSocket);
 };
