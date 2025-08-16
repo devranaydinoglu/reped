@@ -9,11 +9,10 @@
 #include "client.h"
 #include "../controller/controller.h"
 
-Client::Client(const uint16_t port, const std::string& serverAddress, Controller* controller)
-    : port(port), serverAddress(serverAddress), socketFd(0), running(false), controller(nullptr)
+Client::Client(const uint16_t port, const std::string& serverAddress, Controller* controller, const std::string& clientId)
+    : port(port), serverAddress(serverAddress), socketFd(0), running(false), controller(controller), clientId(clientId)
 {
     connect();
-    this->controller = controller;
 }
 
 Client::~Client()
@@ -49,6 +48,13 @@ void Client::connect()
             receiveThread = std::thread(&Client::receiveMessages, this);
             std::cout << "Client started on port " << port << " and connected to server at " << serverAddress << "\n";
             connected = true;
+            
+            std::string connectedMsg = "CONNECTED:" + clientId;
+            if (sendMessage(connectedMsg))
+                std::cout << "Client: Sent operation to server: " << connectedMsg << "\n";
+            else
+                std::cerr << "Client: Failed to send operation to server: " << connectedMsg << "\n";
+
             break;
         }
 
