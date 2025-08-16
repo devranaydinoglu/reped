@@ -59,7 +59,7 @@ void Editor::showEditor(bool* open)
 
         if (!insertedText.empty())
         {
-            controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, insertedText, cursorPos));
+            controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, insertedText, cursorPos, insertedText.size()));
             controller->handleCursorInputEvent(CursorInputEvent(cursorPos + insertedText.size()));
             cursorPos = controller->getCursorPosition();
             cursorLastMovedTime = ImGui::GetTime();
