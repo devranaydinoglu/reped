@@ -18,13 +18,13 @@ int Controller::handleTextInputEvent(const TextInputEvent& event)
         case TextInputEventType::INSERT:
         {
             std::cout << "Controller: INSERT operation - text '" << event.text << "' at position " << event.pos << "\n";
-            processLocalOperation(std::make_unique<InsertOperation>(event.text, event.pos, "4"));
+            processLocalOperation(std::make_unique<InsertOperation>(event.text, event.pos, client->clientId));
             break;
         }
         case TextInputEventType::DELETE:
         {
             std::cout << "Controller: DELETE operation at position " << event.pos << "\n";
-            processLocalOperation(std::make_unique<DeleteOperation>(event.pos, event.length, "4"));
+            processLocalOperation(std::make_unique<DeleteOperation>(event.pos, event.length, client->clientId));
             break;
         }
         default: {
