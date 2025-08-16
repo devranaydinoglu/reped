@@ -18,9 +18,6 @@ public:
 public:
     Controller();
     
-    void setTextEngine(TextEngine* engine) { textEngine = engine; }
-    void setClient(Client* client) { this->client = client; }
-    
     int handleTextInputEvent(const TextInputEvent& event);
     int handleCursorInputEvent(const CursorInputEvent& event);
     std::string getText() const;
