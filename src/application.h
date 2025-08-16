@@ -25,9 +25,12 @@ public:
     
     Window window;
 
+    AppMode appMode;
+    std::string clientId;
+
 public:
     Application();
 
 private:
-    void onSetupCompleted(AppMode appMode, const uint16_t port, const std::string& serverAddress);
+    void onSetupCompleted(AppMode appMode, const uint16_t port, const std::string& serverAddress, const std::string& clientId);
 };
