@@ -10,6 +10,9 @@ class Controller;
 
 class Client
 {
+public:
+    std::string clientId;
+
 private:
     const uint16_t port;
     const std::string serverAddress;
@@ -19,7 +22,7 @@ private:
     Controller* controller;
 
 public:
-    Client(const uint16_t port, const std::string& serverAddress, Controller* controller);
+    Client(const uint16_t port, const std::string& serverAddress, Controller* controller, const std::string& clientId);
     ~Client();
 
     [[nodiscard]] bool isConnected() const;
