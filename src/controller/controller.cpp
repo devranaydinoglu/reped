@@ -3,6 +3,8 @@
 
 #include "controller.h"
 #include "../text_engine/text_engine.h"
+#include "../text_engine/client_text_engine.h"
+#include "../text_engine/server_text_engine.h"
 #include "../text_engine/operations.h"
 #include "../text_engine/input_events.h"
 #include "../networking/client.h"
@@ -57,6 +59,14 @@ void Controller::processLocalOperation(std::unique_ptr<Operation> operation)
         {
             auto insertOp = static_cast<InsertOperation*>(operation.get());
             textEngine->insertLocal(insertOp);
+            
+            ClientTextEngine* clientEngine = dynamic_cast<ClientTextEngine*>(textEngine);
+            if (clientEngine)
+            {
+                auto pendingOp = std::make_unique<InsertOperation>(*insertOp);
+                clientEngine->addPendingLocalOp(std::move(pendingOp));
+            }
+            
             sendOperationToClient(*insertOp);
             break;
         }
@@ -64,6 +74,14 @@ void Controller::processLocalOperation(std::unique_ptr<Operation> operation)
         {
             auto deleteOp = static_cast<DeleteOperation*>(operation.get());
             textEngine->deleteLocal(deleteOp);
+            
+            ClientTextEngine* clientEngine = dynamic_cast<ClientTextEngine*>(textEngine);
+            if (clientEngine)
+            {
+                auto pendingOp = std::make_unique<DeleteOperation>(*deleteOp);
+                clientEngine->addPendingLocalOp(std::move(pendingOp));
+            }
+            
             sendOperationToClient(*deleteOp);
             break;
         }
@@ -112,31 +130,29 @@ void Controller::setCursorPosition(std::size_t position)
     return textEngine->setCursorPosition(position);
 }
 
-void Controller::processIncomingMessage(const std::string &message)
+std::unique_ptr<Operation> Controller::processIncomingMessage(const std::string &message)
 {
-    auto operation = Operation::deserialize(message);
-    
     if (!textEngine)
     {
         std::cerr << "Controller: TextEngine not set\n";
-        return;
+        return nullptr;
     }
-    
-    switch (operation->type)
+
+    std::unique_ptr<Operation> op = Operation::deserialize(message);
+    auto textOp = std::unique_ptr<TextOperation>(static_cast<TextOperation*>(op.release()));
+
+    ServerTextEngine* serverEngine = dynamic_cast<ServerTextEngine*>(textEngine);
+    if (serverEngine)
+    {        
+        return serverEngine->processIncomingOperation(std::move(textOp));
+    }
+
+    ClientTextEngine* clientEngine = dynamic_cast<ClientTextEngine*>(textEngine);
+    if (clientEngine)
     {
-        case OperationType::INSERT:
-        {
-            auto insertOp = static_cast<InsertOperation*>(operation.get());
-            textEngine->insertIncoming(insertOp);
-            break;
-        }
-        case OperationType::DELETE:
-        {
-            auto deleteOp = static_cast<DeleteOperation*>(operation.get());
-            textEngine->deleteIncoming(deleteOp);
-            break;
-        }
-        default:
-            break;
+        clientEngine->processIncomingOperation(std::move(textOp));
+        return nullptr;
     }
+
+    return nullptr;
 }
