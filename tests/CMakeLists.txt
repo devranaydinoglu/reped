@@ -11,6 +11,7 @@ set(TEST_SOURCES
     piece_table_insert_start.cpp
     piece_table_insert_middle.cpp
     piece_table_insert_end.cpp
+    operational_transformation.cpp
 )
 
 add_executable(reped_tests
