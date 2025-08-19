@@ -53,3 +53,5 @@ The one caveat with CRDT is that it has more memory overhead compared to OT as i
 Operational Transformation is a technique for resolving conflicts in collaborative text editing by transforming operations to account for concurrent changes. When two clients perform operations simultaneously, OT ensures that both operations can be applied in a way that maintains document consistency across all clients.
 
 The core principle of OT is the transform function, which takes two conflicting operations and produces a new version of one operation that accounts for the effects of the other. This allows operations to be applied in any order while maintaining the same final document state. OT is more memory-efficient than CRDT since it doesn't require additional metadata per character, but it requires careful implementation of transformation rules.
+
+<img width="1354" height="292" alt="Screenshot 2025-08-19 at 14 49 24" src="https://github.com/user-attachments/assets/284c7157-5c3d-4b4c-9177-073616b22969" />
