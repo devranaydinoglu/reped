@@ -12,19 +12,21 @@ class TextInputEvent
 {
 public:
     TextInputEventType type;
-    char character;
-    std::size_t index;
+    std::string text;
+    std::size_t pos;
+    std::size_t length; // For delete op
 
 public:
-    TextInputEvent(TextInputEventType eventType, char c, std::size_t pos)
-        : type(eventType), character(c), index(pos) {}
+    TextInputEvent(TextInputEventType eventType, std::string text, std::size_t pos, std::size_t length = 1)
+        : type(eventType), text(text), pos(pos), length(length) {}
 };
 
 class CursorInputEvent
 {
 public:
-    std::size_t position;
+    std::size_t pos;
 
 public:
-    CursorInputEvent(std::size_t pos) : position(pos) {}    
+    CursorInputEvent(std::size_t pos)
+        : pos(pos) {}    
 }; 
