@@ -1,6 +1,6 @@
 # Reped
 
-Reped is a real-time collaborative text editor written in C++ that utilizes a client-server networking architecture to synchronize text changes across clients and Dear ImGUI to render its UI. It has a custom piece table implementation for its text buffer for efficient insertions and deletions, along with full undo/redo support.
+Reped is a real-time collaborative text editor written in C++ that utilizes a client-server networking architecture to synchronize text changes across clients and Dear ImGUI to render its UI. It has a custom piece table implementation for its text buffer for efficient insertions and deletions, along with full undo/redo support. It uses OT for conflict resolution to ensure that concurrent text operations are handled properly by the server and clients.
 
 ## Text Buffer
 
@@ -35,3 +35,21 @@ A deletion involves splitting a span into two spans. One of the spans points to 
 An insertion is handled by splitting the span into three spans. The first span points to the items of the old span up to the inserted item. The third span points to the items of the old span after the inserted item. The inserted item is appended to the end of the add buffer file and the second span points to the inserted item. It's also possible to combine multiple insertions in succession into a single span.
 
 <img width="640" height="291" alt="Screenshot 2025-07-27 at 12 38 03" src="https://github.com/user-attachments/assets/488722eb-ea58-4cce-b300-ba6703e968d3" />
+
+
+## Conflict Resolution
+
+### CRDT (Conflict-free Replicated Data Types)
+
+CRDT is an approach to conflict resolution that provides automatic conflict resolution without requiring complex transformation algorithms. Each character in the document gets a unique identifier that includes information about when and where it was created. When multiple clients edit the same document simultaneously, these identifiers allow the system to automatically determine the correct order of characters.
+
+The key advantage of CRDT is that it provides strong eventual consistency. All clients are guaranteed to eventually reach the same document state, regardless of network delays or the order in which operations are received. CRDTs use mathematical properties like commutativity (A + B = B + A) and associativity ((A + B) + C = A + (B + C)) to ensure that merging operations is always conflict-free. This means that no matter what order the operations are applied in, or how they're grouped together, the final result will always be the same.
+
+The one caveat with CRDT is that it has more memory overhead compared to OT as it requires additional metadata to be stored per character for conflict resolution.
+
+
+### OT (Operational Transformation)
+
+Operational Transformation is a technique for resolving conflicts in collaborative text editing by transforming operations to account for concurrent changes. When two clients perform operations simultaneously, OT ensures that both operations can be applied in a way that maintains document consistency across all clients.
+
+The core principle of OT is the transform function, which takes two conflicting operations and produces a new version of one operation that accounts for the effects of the other. This allows operations to be applied in any order while maintaining the same final document state. OT is more memory-efficient than CRDT since it doesn't require additional metadata per character, but it requires careful implementation of transformation rules.
