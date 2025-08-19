@@ -42,4 +42,14 @@ private:
      * Runs in a separate thread when the client connects.
     */
     void receiveMessages();
+    
+    /**
+     * Checks if a received message is an acknowledgment for this client's operation
+     */
+    bool isAckMessage(const std::string& message) const;
+    
+    /**
+     * Handles acknowledgment messages from the server
+     */
+    void handleAckMessage(const std::string& message);
 };

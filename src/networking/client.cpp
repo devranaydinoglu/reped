@@ -5,9 +5,13 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <string.h>
+#include <sstream>
+#include <vector>
 
 #include "client.h"
 #include "../controller/controller.h"
+#include "../text_engine/operations.h"
+#include "../text_engine/client_text_engine.h"
 
 Client::Client(const uint16_t port, const std::string& serverAddress, Controller* controller, const std::string& clientId)
     : port(port), serverAddress(serverAddress), socketFd(0), running(false), controller(controller), clientId(clientId)
@@ -111,6 +115,49 @@ void Client::receiveMessages()
         std::string message(buffer);
         
         std::cout << "Received: " << message << "\n";
-        controller->processIncomingMessage(message);
+        
+        // Parse message to determine if it's an ACK or operation
+        if (isAckMessage(message))
+            handleAckMessage(message);
+        else
+            // Regular operation from another client
+            controller->processIncomingMessage(message);
+    }
+}
+
+bool Client::isAckMessage(const std::string& message) const
+{
+    std::istringstream ss(message);
+    std::string token;
+    std::vector<std::string> parts;
+    
+    while (std::getline(ss, token, ':')) {
+        parts.push_back(token);
+    }
+    
+    if (parts.size() >= 2) {
+        std::string messageClientId = parts[1];
+        return messageClientId == this->clientId;
+    }
+    
+    return false;
+}
+
+void Client::handleAckMessage(const std::string& message)
+{
+    std::cout << "Received ACK: " << message << "\n";
+    
+    auto operation = Operation::deserialize(message);
+    if (!operation) {
+        std::cerr << "Failed to deserialize ACK message: " << message << "\n";
+        return;
+    }
+    
+    if (operation->type == OperationType::INSERT || operation->type == OperationType::DELETE) {
+        auto textOp = static_cast<TextOperation*>(operation.get());
+        
+        ClientTextEngine* clientEngine = dynamic_cast<ClientTextEngine*>(controller->textEngine);
+        if (clientEngine)
+            clientEngine->acknowledgePendingOp(textOp);
     }
 }
