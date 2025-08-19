@@ -17,6 +17,8 @@ set(SOURCES
     src/piece_table/piece.cpp
     src/controller/controller.cpp
     src/text_engine/text_engine.cpp
+    src/text_engine/client_text_engine.cpp
+    src/text_engine/server_text_engine.cpp
     src/text_engine/operations.cpp
 )
 
@@ -54,6 +56,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 set(HEADERS
     src/piece_table/piece_table.h
+    src/text_engine/text_engine.h
 )
 
 add_subdirectory(tests)
@@ -61,6 +64,7 @@ add_subdirectory(tests)
 add_library(reped_lib STATIC ${SOURCES} ${HEADERS})
 target_include_directories(reped_lib PUBLIC
     src/piece_table
+    src/text_engine
     ${IMGUI_PATH}
 )
 target_link_libraries(reped_lib PUBLIC
