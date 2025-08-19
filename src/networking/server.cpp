@@ -240,20 +240,13 @@ void Server::handleParsedMessage(const ParsedMessage& parsedMsg, int clientSocke
             }
 
             // Apply to authoritative document through controller
-            controller->processIncomingMessage(parsedMsg.content);
-
-            // Send acknowledgment back to the originating client
-            // if (operation->type == OperationType::INSERT || operation->type == OperationType::DELETE)
-            // {
-            //     auto* textOp = static_cast<TextOperation*>(operation.get());
-            //     std::string ackMessage = "ACK:" + textOp->clientId;
+            std::unique_ptr<Operation> transformedOp = controller->processIncomingMessage(parsedMsg.content);
+            if (transformedOp) {
+                std::string opMsg = transformedOp->serialize();
                 
-            //     // Send acknowledgment to originating client
-            //     send(clientSocket, ackMessage.c_str(), ackMessage.length(), 0);
-            //     std::cout << "Server: Sent acknowledgment " << ackMessage << " to client " << clientSocket << "\n";
-            // }
-
-            broadcastToClients(parsedMsg.content, clientSocket);
+                broadcastToClients(opMsg, -1);
+                std::cout << "Server: Broadcasted transformed operation: " << opMsg << "\n";
+            }
             break;
         }
         
