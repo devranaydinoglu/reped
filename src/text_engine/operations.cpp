@@ -18,26 +18,34 @@ std::unique_ptr<Operation> Operation::deserialize(const std::string& str)
 
     if (parts[0] == "INSERT")
     {
-        if (parts.size() < 4)  // INSERT:clientId:pos:text
+        if (parts.size() < 6)  // INSERT:clientId:operationId:docVersion:pos:text
             return nullptr;
         
         std::string clientId = parts[1];
-        std::size_t pos = std::stoul(parts[2]);
-        std::string text = parts[3];
+        std::string operationId = parts[2];
+        uint64_t docVersion = std::stoull(parts[3]);
+        std::size_t pos = std::stoul(parts[4]);
+        std::string text = parts[5];
         
         auto op = std::make_unique<InsertOperation>(text, pos, clientId);
+        op->operationId = operationId;
+        op->docVersion = docVersion;
         return std::move(op);
     }
     else if (parts[0] == "DELETE")
     {
-        if (parts.size() < 4)  // DELETE:clientId:pos:length
+        if (parts.size() < 6)  // DELETE:clientId:operationId:docVersion:pos:length
             return nullptr;
         
         std::string clientId = parts[1];
-        std::size_t pos = std::stoul(parts[2]);
-        std::size_t length = std::stoul(parts[3]);
+        std::string operationId = parts[2];
+        uint64_t docVersion = std::stoull(parts[3]);
+        std::size_t pos = std::stoul(parts[4]);
+        std::size_t length = std::stoul(parts[5]);
         
         auto op = std::make_unique<DeleteOperation>(pos, length, clientId);
+        op->operationId = operationId;
+        op->docVersion = docVersion;
         return std::move(op);
     }
     else if (parts[0] == "CURSOR")
