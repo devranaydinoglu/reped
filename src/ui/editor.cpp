@@ -7,7 +7,7 @@
 #include "../text_engine/input_events.h"
 
 Editor::Editor()
-    : controller(nullptr), cursorLastMovedTime(0.0f)
+    : controller(nullptr), cursorLastMovedTime(0.0f), isDragging(false), selectionStartPos(0), selectionEndPos(0)
 {
 }
 
@@ -57,15 +57,54 @@ void Editor::showEditor(bool* open)
 
         if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && cursorPos > 0)
         {
-            controller->handleCursorInputEvent(CursorInputEvent(cursorPos - 1));
-            cursorPos = controller->getCursorPosition();
-            cursorLastMovedTime = ImGui::GetTime();
+            bool isShiftPressed = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift);
+            
+            if (isShiftPressed)
+            {
+                // Start selection if none exists
+                if (!hasSelection())
+                {
+                    selectionStartPos = cursorPos;
+                    selectionEndPos = cursorPos;
+                }
+                
+                // Move cursor and extend selection
+                controller->handleCursorInputEvent(CursorInputEvent(cursorPos - 1));
+                cursorPos = controller->getCursorPosition();
+                selectionEndPos = cursorPos;
+                cursorLastMovedTime = ImGui::GetTime();
+            }
+            else
+            {
+                controller->handleCursorInputEvent(CursorInputEvent(cursorPos - 1));
+                cursorPos = controller->getCursorPosition();
+                onCursorMoved();
+            }
         }
         else if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) && cursorPos < text.size())
         {
-            controller->handleCursorInputEvent(CursorInputEvent(cursorPos + 1));
-            cursorPos = controller->getCursorPosition();
-            cursorLastMovedTime = ImGui::GetTime();
+            bool isShiftPressed = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift);
+            
+            if (isShiftPressed)
+            {
+                if (!hasSelection())
+                {
+                    selectionStartPos = cursorPos;
+                    selectionEndPos = cursorPos;
+                }
+                
+                // Move cursor and extend selection
+                controller->handleCursorInputEvent(CursorInputEvent(cursorPos + 1));
+                cursorPos = controller->getCursorPosition();
+                selectionEndPos = cursorPos;
+                cursorLastMovedTime = ImGui::GetTime();
+            }
+            else
+            {
+                controller->handleCursorInputEvent(CursorInputEvent(cursorPos + 1));
+                cursorPos = controller->getCursorPosition();
+                onCursorMoved();
+            }
         }
 
         auto it = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), cursorPos);
@@ -78,7 +117,7 @@ void Editor::showEditor(bool* open)
             size_t prevLineEnd = lineStartOffsets[currentLine];
             controller->handleCursorInputEvent(CursorInputEvent(prevLineStart + std::min(column, prevLineEnd - prevLineStart - 1)));
             cursorPos = controller->getCursorPosition();
-            cursorLastMovedTime = ImGui::GetTime();
+            onCursorMoved();
         }
         else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) && currentLine + 1 < lineStartOffsets.size() - 1)
         {
@@ -86,7 +125,7 @@ void Editor::showEditor(bool* open)
             size_t nextLineEnd = lineStartOffsets[currentLine + 2];
             controller->handleCursorInputEvent(CursorInputEvent(nextLineStart + std::min(column, nextLineEnd - nextLineStart - 1)));
             cursorPos = controller->getCursorPosition();
-            cursorLastMovedTime = ImGui::GetTime();
+            onCursorMoved();
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_Backspace) && cursorPos > 0)
@@ -94,7 +133,7 @@ void Editor::showEditor(bool* open)
             controller->handleTextInputEvent(TextInputEvent(TextInputEventType::DELETE, "\0", cursorPos - 1));
             controller->handleCursorInputEvent(CursorInputEvent(cursorPos - 1));
             cursorPos = controller->getCursorPosition();
-            cursorLastMovedTime = ImGui::GetTime();
+            onCursorMoved();
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_Enter))
@@ -102,15 +141,34 @@ void Editor::showEditor(bool* open)
             controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, "\n", cursorPos));
             controller->handleCursorInputEvent(CursorInputEvent(cursorPos + 1));
             cursorPos = controller->getCursorPosition();
-            cursorLastMovedTime = ImGui::GetTime();
+            onCursorMoved();
         }
 
-        if (ImGui::IsKeyPressed(ImGuiKey_MouseLeft))
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             std::size_t charPos = mousePosToCharPos(baseX, baseY, charWidth, lineHeight, text.size());
             controller->handleCursorInputEvent(CursorInputEvent(charPos));
+            
+            isDragging = true;
+            selectionStartPos = charPos;
+            selectionEndPos = charPos;
 
             cursorLastMovedTime = ImGui::GetTime();
+        }
+        else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && isDragging)
+        {
+            std::size_t charPos = mousePosToCharPos(baseX, baseY, charWidth, lineHeight, text.size());
+            selectionEndPos = charPos;
+            
+            // Update cursor to follow drag
+            controller->handleCursorInputEvent(CursorInputEvent(charPos));
+            cursorLastMovedTime = ImGui::GetTime();
+        }
+        
+        // End dragging when mouse is released
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        {
+            isDragging = false;
         }
     }
 
@@ -168,6 +226,83 @@ void Editor::showEditor(bool* open)
             IM_COL32_WHITE, 1.0f);
     }
 
+    // Draw text selection highlight
+    if (hasSelection())
+    {
+        ImU32 bg_color = ImGui::GetColorU32(ImGuiCol_TextSelectedBg, 0.6f);
+        
+        size_t selStart = getSelectionStart();
+        size_t selEnd = getSelectionEnd();
+        
+        // Find line/column for start and end positions
+        auto startIt = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), selStart);
+        size_t startLine = std::distance(lineStartOffsets.begin(), startIt) - 1;
+        size_t startColumn = selStart - lineStartOffsets[startLine];
+        
+        auto endIt = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), selEnd);
+        size_t endLine = std::distance(lineStartOffsets.begin(), endIt) - 1;
+        size_t endColumn = selEnd - lineStartOffsets[endLine];
+        
+        if (startLine == endLine)
+        {
+            // Single line selection
+            float startX = baseX + startColumn * charWidth;
+            float endX = baseX + endColumn * charWidth;
+            float y = baseY + startLine * lineHeight;
+            
+            drawList->AddRectFilled(
+                ImVec2(startX, y),
+                ImVec2(endX, y + lineHeight),
+                bg_color
+            );
+        }
+        else
+        {
+            // Multi-line selection
+            // First line: from start column to end of line
+            float startX = baseX + startColumn * charWidth;
+            float startY = baseY + startLine * lineHeight;
+            
+            // Calculate end of first line
+            size_t firstLineEnd = (startLine + 1 < lineStartOffsets.size()) ? 
+                lineStartOffsets[startLine + 1] - lineStartOffsets[startLine] - 1 : 
+                text.size() - lineStartOffsets[startLine];
+            float firstLineEndX = baseX + firstLineEnd * charWidth;
+            
+            drawList->AddRectFilled(
+                ImVec2(startX, startY),
+                ImVec2(firstLineEndX, startY + lineHeight),
+                bg_color
+            );
+            
+            // Middle lines: full width
+            for (size_t line = startLine + 1; line < endLine; ++line)
+            {
+                float y = baseY + line * lineHeight;
+                size_t lineLength = (line + 1 < lineStartOffsets.size()) ?
+                    lineStartOffsets[line + 1] - lineStartOffsets[line] - 1 :
+                    text.size() - lineStartOffsets[line];
+                float lineEndX = baseX + lineLength * charWidth;
+                
+                drawList->AddRectFilled(
+                    ImVec2(baseX, y),
+                    ImVec2(lineEndX, y + lineHeight),
+                    bg_color
+                );
+            }
+            
+            // Last line: from start of line to end column
+            float endX = baseX + endColumn * charWidth;
+            float endY = baseY + endLine * lineHeight;
+            
+            drawList->AddRectFilled(
+                ImVec2(baseX, endY),
+                ImVec2(endX, endY + lineHeight),
+                bg_color
+            );
+        }
+    }
+
     ImGui::End();
 }
 
@@ -182,8 +317,32 @@ void Editor::handleTextInput(const char* text)
         std::size_t cursorPos = controller->getCursorPosition();
         controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, inputText, cursorPos, inputText.size()));
         controller->handleCursorInputEvent(CursorInputEvent(cursorPos + inputText.size()));
-        cursorLastMovedTime = ImGui::GetTime();
+        onCursorMoved();
     }
+}
+
+bool Editor::hasSelection() const
+{
+    return selectionStartPos != selectionEndPos;
+}
+
+std::size_t Editor::getSelectionStart() const
+{
+    return std::min(selectionStartPos, selectionEndPos);
+}
+
+std::size_t Editor::getSelectionEnd() const
+{
+    return std::max(selectionStartPos, selectionEndPos);
+}
+
+void Editor::onCursorMoved()
+{
+    cursorLastMovedTime = ImGui::GetTime();
+    
+    // Clear selection when cursor is moved via keyboard
+    selectionStartPos = 0;
+    selectionEndPos = 0;
 }
 
 std::size_t Editor::mousePosToCharPos(float baseX, float baseY, float charWidth, float lineHeight, std::size_t textLength)

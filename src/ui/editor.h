@@ -16,6 +16,11 @@ private:
 
     float cursorLastMovedTime;
 
+    // Text selection
+    bool isDragging;
+    std::size_t selectionStartPos;
+    std::size_t selectionEndPos;
+
 public:
     Editor();
     void showEditor(bool* open);
@@ -23,5 +28,11 @@ public:
     void handleTextInput(const char* text);
 
 private:
+    void onCursorMoved();
     std::size_t mousePosToCharPos(float baseX, float baseY, float charWidth, float lineHeight, std::size_t textLength);
+
+    // Text selection
+    bool hasSelection() const;
+    std::size_t getSelectionStart() const;
+    std::size_t getSelectionEnd() const;
 };
