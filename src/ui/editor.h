@@ -21,4 +21,7 @@ public:
     void showEditor(bool* open);
     void setController(Controller* controller) { this->controller = controller; }
     void handleTextInput(const char* text);
+
+private:
+    std::size_t mousePosToCharPos(float baseX, float baseY, float charWidth, float lineHeight, std::size_t textLength);
 };
