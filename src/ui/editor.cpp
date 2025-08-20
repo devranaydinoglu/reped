@@ -51,15 +51,13 @@ void Editor::showEditor(bool* open)
     if (editorIsActive)
     {
         // Text input is handled via SDL events in handleTextInput()
-        // Only handle special keys here
+        // Only special keys are handled here
         size_t cursorPos = controller->getCursorPosition();
         std::string text = controller->getText();
 
         if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && cursorPos > 0)
-        {
-            bool isShiftPressed = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift);
-            
-            if (isShiftPressed)
+        {            
+            if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift))
             {
                 // Start selection if none exists
                 if (!hasSelection())
@@ -83,9 +81,7 @@ void Editor::showEditor(bool* open)
         }
         else if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) && cursorPos < text.size())
         {
-            bool isShiftPressed = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift);
-            
-            if (isShiftPressed)
+            if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift))
             {
                 if (!hasSelection())
                 {
@@ -128,12 +124,21 @@ void Editor::showEditor(bool* open)
             onCursorMoved();
         }
 
-        if (ImGui::IsKeyPressed(ImGuiKey_Backspace) && cursorPos > 0)
+        if (ImGui::IsKeyPressed(ImGuiKey_Backspace))
         {
-            controller->handleTextInputEvent(TextInputEvent(TextInputEventType::DELETE, "\0", cursorPos - 1));
-            controller->handleCursorInputEvent(CursorInputEvent(cursorPos - 1));
-            cursorPos = controller->getCursorPosition();
-            onCursorMoved();
+            if (hasSelection())
+            {
+                deleteSelectedText(cursorPos);
+                cursorLastMovedTime = ImGui::GetTime();
+            }
+            else if (cursorPos > 0)
+            {
+                // Regular backspace - delete one character
+                controller->handleTextInputEvent(TextInputEvent(TextInputEventType::DELETE, "\0", cursorPos - 1));
+                controller->handleCursorInputEvent(CursorInputEvent(cursorPos - 1));
+                cursorPos = controller->getCursorPosition();
+                onCursorMoved();
+            }
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_Enter))
@@ -160,15 +165,45 @@ void Editor::showEditor(bool* open)
             std::size_t charPos = mousePosToCharPos(baseX, baseY, charWidth, lineHeight, text.size());
             selectionEndPos = charPos;
             
-            // Update cursor to follow drag
             controller->handleCursorInputEvent(CursorInputEvent(charPos));
             cursorLastMovedTime = ImGui::GetTime();
         }
         
         // End dragging when mouse is released
         if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-        {
             isDragging = false;
+
+        // Handle copy
+        if ((ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl)) && ImGui::IsKeyPressed(ImGuiKey_C))
+        {
+            if (hasSelection())
+            {
+                size_t selStart = getSelectionStart();
+                size_t selEnd = getSelectionEnd();
+                std::string copyText = text.substr(selStart, selEnd - selStart);
+                SDL_SetClipboardText(copyText.c_str());
+            }
+        }
+        
+        // Handle paste
+        if ((ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl)) && ImGui::IsKeyPressed(ImGuiKey_V))
+        {
+            char* clipboardText = SDL_GetClipboardText();
+            if (clipboardText && strlen(clipboardText) > 0)
+            {
+                std::string pasteText(clipboardText);
+                
+                if (hasSelection())
+                    deleteSelectedText(cursorPos);
+                
+                controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, pasteText, cursorPos, pasteText.size()));
+                controller->handleCursorInputEvent(CursorInputEvent(cursorPos + pasteText.size()));
+                onCursorMoved();
+            }
+            if (clipboardText)
+            {
+                SDL_free(clipboardText);
+            }
         }
     }
 
@@ -315,6 +350,10 @@ void Editor::handleTextInput(const char* text)
     if (!inputText.empty())
     {
         std::size_t cursorPos = controller->getCursorPosition();
+        
+        if (hasSelection())
+            deleteSelectedText(cursorPos);
+        
         controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, inputText, cursorPos, inputText.size()));
         controller->handleCursorInputEvent(CursorInputEvent(cursorPos + inputText.size()));
         onCursorMoved();
@@ -334,6 +373,20 @@ std::size_t Editor::getSelectionStart() const
 std::size_t Editor::getSelectionEnd() const
 {
     return std::max(selectionStartPos, selectionEndPos);
+}
+
+void Editor::deleteSelectedText(std::size_t& cursorPos)
+{
+    size_t selStart = getSelectionStart();
+    size_t selEnd = getSelectionEnd();
+    
+    controller->handleTextInputEvent(TextInputEvent(TextInputEventType::DELETE, "\0", selStart, selEnd - selStart));
+
+    controller->handleCursorInputEvent(CursorInputEvent(selStart));
+    cursorPos = selStart;
+    
+    selectionStartPos = 0;
+    selectionEndPos = 0;
 }
 
 void Editor::onCursorMoved()

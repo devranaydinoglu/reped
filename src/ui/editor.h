@@ -35,4 +35,5 @@ private:
     bool hasSelection() const;
     std::size_t getSelectionStart() const;
     std::size_t getSelectionEnd() const;
+    void deleteSelectedText(std::size_t& cursorPos);
 };
