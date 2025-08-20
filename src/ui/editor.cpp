@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <SDL3/SDL.h>
+
 #include "editor.h"
 #include "imgui.h"
 #include "../controller/controller.h"
@@ -18,7 +21,7 @@ void Editor::showEditor(bool* open)
     ImGui::SetNextWindowSize(editorSize);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
 
-    ImGui::Begin("CustomEditor", open, windowFlags);
+    ImGui::Begin("Editor", open, windowFlags);
 
     // Draw background
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -101,6 +104,14 @@ void Editor::showEditor(bool* open)
             cursorPos = controller->getCursorPosition();
             cursorLastMovedTime = ImGui::GetTime();
         }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_MouseLeft))
+        {
+            std::size_t charPos = mousePosToCharPos(baseX, baseY, charWidth, lineHeight, text.size());
+            controller->handleCursorInputEvent(CursorInputEvent(charPos));
+
+            cursorLastMovedTime = ImGui::GetTime();
+        }
     }
 
     cursorPos = controller->getCursorPosition();
@@ -162,14 +173,33 @@ void Editor::showEditor(bool* open)
 
 void Editor::handleTextInput(const char* text)
 {
-    if (!controller || !text) return;
+    if (!controller || !text)
+        return;
     
     std::string inputText(text);
     if (!inputText.empty())
     {
-        size_t cursorPos = controller->getCursorPosition();
+        std::size_t cursorPos = controller->getCursorPosition();
         controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, inputText, cursorPos, inputText.size()));
         controller->handleCursorInputEvent(CursorInputEvent(cursorPos + inputText.size()));
         cursorLastMovedTime = ImGui::GetTime();
     }
+}
+
+std::size_t Editor::mousePosToCharPos(float baseX, float baseY, float charWidth, float lineHeight, std::size_t textLength)
+{
+    std::size_t xIndex = (ImGui::GetMousePos().x - baseX) / charWidth;
+    std::size_t yIndex = (ImGui::GetMousePos().y - baseY) / lineHeight;
+    
+    yIndex = std::min(yIndex, lineStartOffsets.size() - 1);
+
+    std::size_t lineLength;
+    if (yIndex + 1 < lineStartOffsets.size())
+        lineLength = lineStartOffsets[yIndex + 1] - lineStartOffsets[yIndex] - 1;
+    else
+        lineLength = textLength - lineStartOffsets[yIndex];
+
+    xIndex = std::min(xIndex, lineLength);
+    
+    return static_cast<std::size_t>(lineStartOffsets[yIndex] + xIndex);
 }
