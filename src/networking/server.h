@@ -14,7 +14,8 @@ enum class MessageType
 {
     UNKNOWN,
     CONNECTED,
-    OPERATION
+    OPERATION,
+    INIT_DOCUMENT
 };
 
 struct ParsedMessage
