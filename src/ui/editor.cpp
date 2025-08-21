@@ -115,7 +115,7 @@ void Editor::showEditor(bool* open)
             cursorPos = controller->getCursorPosition();
             onCursorMoved();
         }
-        else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) && currentLine + 1 < lineStartOffsets.size() - 1)
+        else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) && currentLine + 1 < lineStartOffsets.size())
         {
             size_t nextLineStart = lineStartOffsets[currentLine + 1];
             size_t nextLineEnd = lineStartOffsets[currentLine + 2];
