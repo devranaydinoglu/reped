@@ -80,7 +80,7 @@ void SetupWindow::showSetupWindow(bool* open)
         {
             IGFD::FileDialogConfig config;
             config.path = ".";
-            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".cpp,.h,.hpp", config);
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".txt", config);
         }
 
         ImGui::EndTable();
