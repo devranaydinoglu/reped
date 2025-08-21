@@ -63,9 +63,33 @@ void TextEngine::setCursorPosition(std::size_t position)
     cursorPosition = position;
 }
 
+std::size_t TextEngine::getCursorPosition() const
+{
+    return cursorPosition;
+}
+
 std::string TextEngine::getText() const
 {
     return textBuffer.getText();
+}
+
+std::size_t TextEngine::getDocumentLength() const
+{
+    return textBuffer.getDocumentLength();
+}
+
+void TextEngine::readFile(std::string filePathName)
+{
+    textBuffer.readFile(filePathName);
+    docVersion = 0;
+    cursorPosition = 0;
+}
+
+void TextEngine::readString(const std::string& str)
+{
+    textBuffer.readString(str);
+    docVersion = 0;
+    cursorPosition = 0;
 }
 
 std::unique_ptr<TextOperation> TextEngine::transform(const TextOperation* op1, const TextOperation* op2)

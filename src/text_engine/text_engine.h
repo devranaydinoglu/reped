@@ -11,7 +11,6 @@ class TextEngine
 protected:
     PieceTable textBuffer;
     std::size_t cursorPosition;
-
     uint64_t docVersion;
 
 public:
@@ -26,8 +25,11 @@ public:
     void deleteLocal(DeleteOperation* deleteOp);
     void deleteIncoming(DeleteOperation* deleteOp);
     void setCursorPosition(std::size_t position);
-    std::size_t getCursorPosition() const { return cursorPosition; }
-    std::string getText() const;
+    [[nodiscard]] std::size_t getCursorPosition() const;
+    [[nodiscard]] std::string getText() const;
+    [[nodiscard]] std::size_t getDocumentLength() const;
+    void readFile(std::string filePathName);
+    void readString(const std::string& str);
 
     /**
     * Transform op1 against op2.

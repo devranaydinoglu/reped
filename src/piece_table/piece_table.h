@@ -15,10 +15,12 @@ private:
 
 public:
     PieceTable();
-    void read(const std::string& fileName);
+    void readFile(const std::string& fileName);
+    void readString(const std::string& str);
     void insert(std::string_view text, const std::size_t index);
     void remove(const std::size_t startIndex, const std::size_t endIndex);
     [[nodiscard]] std::string getText() const;
+    [[nodiscard]] std::size_t getDocumentLength() const { return documentLength; }
 
 private:
     std::tuple<std::size_t, Piece*> findPieceAtIndex(const std::size_t index);

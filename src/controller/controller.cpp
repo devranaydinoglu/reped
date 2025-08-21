@@ -130,6 +130,12 @@ void Controller::setCursorPosition(std::size_t position)
     return textEngine->setCursorPosition(position);
 }
 
+void Controller::setInitialDocument(const std::string& str)
+{
+    textEngine->readString(str);
+    std::cout << "Controller: Set initial document with " << str.length() << " characters\n";
+}
+
 std::unique_ptr<Operation> Controller::processIncomingMessage(const std::string &message)
 {
     if (!textEngine)

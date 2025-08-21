@@ -13,7 +13,7 @@ PieceTable::PieceTable()
 {
 }
 
-void PieceTable::read(const std::string& fileName)
+void PieceTable::readFile(const std::string& fileName)
 {
     std::ifstream fileStream(fileName);
     if (!fileStream)
@@ -38,8 +38,21 @@ void PieceTable::read(const std::string& fileName)
     }
 
     pieces.emplace_back(BufferType::ORIGINAL, 0, documentLength);
+}
 
-    std::cout << "Characters: " << documentLength << "\n";
+void PieceTable::readString(const std::string& str)
+{
+    pieces.clear();
+    originalBuffer.clear();
+    addBuffer.clear();
+    documentLength = 0;
+
+    if (!str.empty())
+    {
+        documentLength = str.size();
+        originalBuffer = str;
+        pieces.emplace_back(BufferType::ORIGINAL, 0, documentLength);
+    }
 }
 
 void PieceTable::insert(std::string_view text, const std::size_t index)

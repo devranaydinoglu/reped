@@ -23,6 +23,7 @@ public:
     std::string getText() const;
     std::size_t getCursorPosition() const;
     void setCursorPosition(std::size_t position);
+    void setInitialDocument(const std::string& str);
     std::unique_ptr<Operation> processIncomingMessage(const std::string& message);
 
 private:
