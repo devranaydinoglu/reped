@@ -227,6 +227,11 @@ void Server::handleParsedMessage(const ParsedMessage& parsedMsg, int clientSocke
                 clientIdMap[clientSocket] = parsedMsg.clientId;
             }
             std::cout << "Client " << clientSocket << " connected with ID: " << parsedMsg.clientId << "\n";
+            
+            std::string text = controller->getText();
+            std::string initMsg = "INIT_DOCUMENT:" + text;
+            send(clientSocket, initMsg.c_str(), initMsg.length(), 0);
+            std::cout << "Server: Sent initial document to client " << parsedMsg.clientId << "\n";
             break;
         }
             
