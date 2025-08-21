@@ -32,5 +32,5 @@ public:
     Application();
 
 private:
-    void onSetupCompleted(AppMode appMode, const uint16_t port, const std::string& serverAddress, const std::string& clientId);
+    void onSetupCompleted(AppMode appMode, const uint16_t port, const std::string& serverAddress, const std::string& clientId, const std::string& filePathName);
 };

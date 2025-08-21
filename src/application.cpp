@@ -11,9 +11,9 @@ Application::Application()
         textEngine(nullptr), clientId("")
 {    
     // Setup window callbacks
-    window.setOnSetupCompletedCallback([this] (AppMode appMode, const uint16_t port, const std::string& serverAddress, const std::string& clientId)
+    window.setOnSetupCompletedCallback([this] (AppMode appMode, const uint16_t port, const std::string& serverAddress, const std::string& clientId, const std::string& filePathName)
     {
-        this->onSetupCompleted(appMode, port, serverAddress, clientId);
+        this->onSetupCompleted(appMode, port, serverAddress, clientId, filePathName);
     });
     
     window.setEditorController(controller.get());
@@ -21,7 +21,7 @@ Application::Application()
     window.render();
 }
 
-void Application::onSetupCompleted(AppMode appMode, const uint16_t port, const std::string& serverAddress, const std::string& clientId)
+void Application::onSetupCompleted(AppMode appMode, const uint16_t port, const std::string& serverAddress, const std::string& clientId, const std::string& filePathName)
 {
     this->appMode = appMode;
     this->clientId = clientId;
@@ -36,6 +36,7 @@ void Application::onSetupCompleted(AppMode appMode, const uint16_t port, const s
         case AppMode::SERVER:
             server = std::make_unique<Server>(port, serverAddress, controller.get());
             textEngine = std::make_unique<ServerTextEngine>();
+            textEngine->readFile(filePathName);
             break;
         default:
             return;
