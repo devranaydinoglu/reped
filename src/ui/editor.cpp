@@ -30,7 +30,6 @@ void Editor::showEditor(bool* open)
     ImVec2 pMax = ImVec2(contentAreaOrigin.x + contentRegionAvail.x, contentAreaOrigin.y + contentRegionAvail.y);
     drawList->AddRectFilled(contentAreaOrigin, pMax, IM_COL32(30, 30, 30, 255));
 
-    // Input capture
     ImGui::SetCursorScreenPos(contentAreaOrigin);
     ImGui::InvisibleButton("EditorInputCapture", contentRegionAvail, ImGuiButtonFlags_MouseButtonLeft);
     ImGui::SetItemDefaultFocus();
@@ -111,17 +110,76 @@ void Editor::showEditor(bool* open)
         {
             size_t prevLineStart = lineStartOffsets[currentLine - 1];
             size_t prevLineEnd = lineStartOffsets[currentLine];
-            controller->handleCursorInputEvent(CursorInputEvent(prevLineStart + std::min(column, prevLineEnd - prevLineStart - 1)));
-            cursorPos = controller->getCursorPosition();
-            onCursorMoved();
+            
+            // Calculate the length of the previous line (excluding newline character)
+            size_t prevLineLength = prevLineEnd - prevLineStart;
+            if (prevLineLength > 0 && prevLineStart + prevLineLength - 1 < text.size() && text[prevLineStart + prevLineLength - 1] == '\n') {
+                prevLineLength--; // Don't count the newline character
+            }
+            
+            // Position cursor at the same column or at the end of the line if it's shorter
+            size_t targetColumn = std::min(column, prevLineLength);
+            
+            if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift))
+            {
+                if (!hasSelection())
+                {
+                    selectionStartPos = cursorPos;
+                    selectionEndPos = cursorPos;
+                }
+
+                // Move cursor and extend selection
+                controller->handleCursorInputEvent(CursorInputEvent(prevLineStart + targetColumn));
+                cursorPos = controller->getCursorPosition();
+                selectionEndPos = cursorPos;
+                cursorLastMovedTime = ImGui::GetTime();
+            }
+            else
+            {
+                controller->handleCursorInputEvent(CursorInputEvent(prevLineStart + targetColumn));
+                cursorPos = controller->getCursorPosition();
+                onCursorMoved();
+            }
         }
         else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) && currentLine + 1 < lineStartOffsets.size())
         {
             size_t nextLineStart = lineStartOffsets[currentLine + 1];
-            size_t nextLineEnd = lineStartOffsets[currentLine + 2];
-            controller->handleCursorInputEvent(CursorInputEvent(nextLineStart + std::min(column, nextLineEnd - nextLineStart - 1)));
-            cursorPos = controller->getCursorPosition();
-            onCursorMoved();
+            size_t nextLineEnd;
+            
+            if (currentLine + 2 < lineStartOffsets.size())
+                nextLineEnd = lineStartOffsets[currentLine + 2];
+            else
+                nextLineEnd = text.size();
+            
+            // Calculate the length of the next line (excluding newline character)
+            size_t nextLineLength = nextLineEnd - nextLineStart;
+            if (nextLineLength > 0 && nextLineStart + nextLineLength - 1 < text.size() && text[nextLineStart + nextLineLength - 1] == '\n') {
+                nextLineLength--; // Don't count the newline character
+            }
+            
+            // Position cursor at the same column or at the end of the line if it's shorter
+            size_t targetColumn = std::min(column, nextLineLength);
+            
+            if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift))
+            {
+                if (!hasSelection())
+                {
+                    selectionStartPos = cursorPos;
+                    selectionEndPos = cursorPos;
+                }
+
+                // Move cursor and extend selection
+                controller->handleCursorInputEvent(CursorInputEvent(nextLineStart + targetColumn));
+                cursorPos = controller->getCursorPosition();
+                selectionEndPos = cursorPos;
+                cursorLastMovedTime = ImGui::GetTime();
+            }
+            else
+            {
+                controller->handleCursorInputEvent(CursorInputEvent(nextLineStart + targetColumn));
+                cursorPos = controller->getCursorPosition();
+                onCursorMoved();
+            }
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_Backspace))
@@ -133,7 +191,6 @@ void Editor::showEditor(bool* open)
             }
             else if (cursorPos > 0)
             {
-                // Regular backspace - delete one character
                 controller->handleTextInputEvent(TextInputEvent(TextInputEventType::DELETE, "\0", cursorPos - 1));
                 controller->handleCursorInputEvent(CursorInputEvent(cursorPos - 1));
                 cursorPos = controller->getCursorPosition();
@@ -226,15 +283,18 @@ void Editor::showEditor(bool* open)
     
     size_t numCharsRendered = 0;
 
-    for (size_t lineIndex = 0; lineIndex <= lineStartOffsets.size() - 1; ++lineIndex)
+    for (size_t lineIndex = 0; lineIndex < lineStartOffsets.size(); ++lineIndex)
     {
-        size_t lineStart = lineStartOffsets[lineIndex];
-        size_t lineEnd = lineStartOffsets[lineIndex + 1];
-        std::size_t len;
-        if (lineEnd == 0)
-            len = text.size();
+        size_t lineStart = lineStartOffsets[lineIndex];        
+        size_t lineEnd;
+        
+        if (lineIndex + 1 < lineStartOffsets.size())
+            lineEnd = lineStartOffsets[lineIndex + 1];
         else
-            len = lineEnd;
+            lineEnd = text.size();
+        
+        size_t len = lineEnd - lineStart;
+        
         std::string lineBuffer = text.substr(lineStart, len);
         ImVec2 linePos = ImVec2(baseX, baseY + lineIndex * lineHeight);
         drawList->AddText(linePos, IM_COL32_WHITE, lineBuffer.c_str());
