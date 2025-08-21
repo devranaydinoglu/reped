@@ -115,13 +115,20 @@ void Client::receiveMessages()
         std::string message(buffer);
         
         std::cout << "Received: " << message << "\n";
-        
-        // Parse message to determine if it's an ACK or operation
-        if (isAckMessage(message))
-            handleAckMessage(message);
+    
+        if (message.size() >= 13 && message.substr(0, 14) == "INIT_DOCUMENT:")
+        {
+            std::string initialContent = message.substr(14);
+            controller->setInitialDocument(initialContent);
+        }
+        else if (isAckMessage(message))
+        {
+            handleAckMessage(message);            
+        }
         else
-            // Regular operation from another client
+        {
             controller->processIncomingMessage(message);
+        }
     }
 }
 
