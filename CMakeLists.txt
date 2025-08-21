@@ -20,6 +20,8 @@ set(SOURCES
     src/text_engine/client_text_engine.cpp
     src/text_engine/server_text_engine.cpp
     src/text_engine/operations.cpp
+
+    lib/ImGuiFileDialog/ImGuiFileDialog.cpp
 )
 
 find_package(SDL3 REQUIRED)
