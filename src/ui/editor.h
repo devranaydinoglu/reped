@@ -21,6 +21,7 @@ private:
     std::size_t selectionStartPos;
     std::size_t selectionEndPos;
 
+    // Scrolling
     std::size_t lineScrollOffsetY;
 
 public:

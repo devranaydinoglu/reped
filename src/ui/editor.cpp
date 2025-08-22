@@ -23,15 +23,20 @@ void Editor::showEditor(bool* open)
 
     ImGui::Begin("Editor", open, windowFlags);
 
-    // Draw background
+    const float statusBarHeight = 20.0f;
+    
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImVec2 contentAreaOrigin = ImGui::GetCursorScreenPos();
     ImVec2 contentRegionAvail = ImGui::GetContentRegionAvail();
-    ImVec2 pMax = ImVec2(contentAreaOrigin.x + contentRegionAvail.x, contentAreaOrigin.y + contentRegionAvail.y);
+    
+    ImVec2 textAreaSize(contentRegionAvail.x, contentRegionAvail.y - statusBarHeight);
+    
+    // Draw background
+    ImVec2 pMax = ImVec2(contentAreaOrigin.x + textAreaSize.x, contentAreaOrigin.y + textAreaSize.y);
     drawList->AddRectFilled(contentAreaOrigin, pMax, IM_COL32(30, 30, 30, 255));
 
     ImGui::SetCursorScreenPos(contentAreaOrigin);
-    ImGui::InvisibleButton("EditorInputCapture", contentRegionAvail, ImGuiButtonFlags_MouseButtonLeft);
+    ImGui::InvisibleButton("EditorInputCapture", textAreaSize, ImGuiButtonFlags_MouseButtonLeft);
     ImGui::SetItemDefaultFocus();
     ImGui::SetKeyboardFocusHere();
 
@@ -279,13 +284,13 @@ void Editor::showEditor(bool* open)
         lineStartOffsets.emplace_back(text.size());
 
     // Scrolling
-    std::size_t maxRenderableLines = contentRegionAvail.y / lineHeight - 1;
+    std::size_t maxRenderableLines = textAreaSize.y / lineHeight - 1;
 
     auto cursorLinePosIt = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), cursorPos);
     std::size_t cursorLinePos = std::distance(lineStartOffsets.begin(), cursorLinePosIt) - 1;
     
-    if (cursorLinePos >= maxRenderableLines + lineScrollOffsetY)
-        lineScrollOffsetY = cursorLinePos - maxRenderableLines;
+    if (cursorLinePos >= maxRenderableLines + lineScrollOffsetY - 1)
+        lineScrollOffsetY = cursorLinePos - maxRenderableLines + 1;
     else if (cursorLinePos < lineScrollOffsetY && lineScrollOffsetY > 0)
         lineScrollOffsetY = cursorLinePos;
 
@@ -410,6 +415,29 @@ void Editor::showEditor(bool* open)
             );
         }
     }
+
+    // Draw status bar
+    ImVec2 statusBarPos = ImVec2(contentAreaOrigin.x, contentAreaOrigin.y + textAreaSize.y);
+    ImVec2 statusBarMax = ImVec2(contentAreaOrigin.x + contentRegionAvail.x, statusBarPos.y + statusBarHeight);
+    
+    drawList->AddRectFilled(statusBarPos, statusBarMax, IM_COL32(45, 45, 48, 255));
+    
+    drawList->AddLine(
+        ImVec2(statusBarPos.x, statusBarPos.y),
+        ImVec2(statusBarPos.x + contentRegionAvail.x, statusBarPos.y),
+        IM_COL32(70, 70, 70, 255), 1.0f);
+    
+    const float padding = 5.0f;
+    ImVec2 textPos(statusBarPos.x + padding, statusBarPos.y + 2.0f);
+    
+    std::string clientIdStr = controller ? controller->getClientId() : "Unknown";
+    
+    std::string statusText = clientIdStr + " | ";
+    statusText += "Characters: " + std::to_string(text.size()) + " | ";
+    statusText += "Line: " + std::to_string(cursorLine + 1) + ", ";
+    statusText += "Column: " + std::to_string(cursorColumn + 1);
+    
+    drawList->AddText(textPos, IM_COL32(180, 180, 180, 255), statusText.c_str());
 
     ImGui::End();
 }
