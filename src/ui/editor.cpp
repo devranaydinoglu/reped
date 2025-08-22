@@ -44,14 +44,14 @@ void Editor::showEditor(bool* open)
     float baseY = contentAreaOrigin.y + 5.0f;
 
     std::string text = controller->getText();
-    size_t cursorPos = controller->getCursorPosition();
+    std::size_t cursorPos = controller->getCursorPosition();
     
     // INPUT HANDLING
     if (editorIsActive)
     {
         // Text input is handled via SDL events in handleTextInput()
         // Only special keys are handled here
-        size_t cursorPos = controller->getCursorPosition();
+        std::size_t cursorPos = controller->getCursorPosition();
         std::string text = controller->getText();
 
         if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && cursorPos > 0)
@@ -103,22 +103,22 @@ void Editor::showEditor(bool* open)
         }
 
         auto it = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), cursorPos);
-        size_t currentLine = std::distance(lineStartOffsets.begin(), it) - 1;
-        size_t column = cursorPos - lineStartOffsets[currentLine];
+        std::size_t currentLine = std::distance(lineStartOffsets.begin(), it) - 1;
+        std::size_t column = cursorPos - lineStartOffsets[currentLine];
 
         if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) && currentLine > 0)
         {
-            size_t prevLineStart = lineStartOffsets[currentLine - 1];
-            size_t prevLineEnd = lineStartOffsets[currentLine];
+            std::size_t prevLineStart = lineStartOffsets[currentLine - 1];
+            std::size_t prevLineEnd = lineStartOffsets[currentLine];
             
             // Calculate the length of the previous line (excluding newline character)
-            size_t prevLineLength = prevLineEnd - prevLineStart;
+            std::size_t prevLineLength = prevLineEnd - prevLineStart;
             if (prevLineLength > 0 && prevLineStart + prevLineLength - 1 < text.size() && text[prevLineStart + prevLineLength - 1] == '\n') {
                 prevLineLength--; // Don't count the newline character
             }
             
             // Position cursor at the same column or at the end of the line if it's shorter
-            size_t targetColumn = std::min(column, prevLineLength);
+            std::size_t targetColumn = std::min(column, prevLineLength);
             
             if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift))
             {
@@ -143,8 +143,8 @@ void Editor::showEditor(bool* open)
         }
         else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) && currentLine + 1 < lineStartOffsets.size())
         {
-            size_t nextLineStart = lineStartOffsets[currentLine + 1];
-            size_t nextLineEnd;
+            std::size_t nextLineStart = lineStartOffsets[currentLine + 1];
+            std::size_t nextLineEnd;
             
             if (currentLine + 2 < lineStartOffsets.size())
                 nextLineEnd = lineStartOffsets[currentLine + 2];
@@ -235,8 +235,8 @@ void Editor::showEditor(bool* open)
         {
             if (hasSelection())
             {
-                size_t selStart = getSelectionStart();
-                size_t selEnd = getSelectionEnd();
+                std::size_t selStart = getSelectionStart();
+                std::size_t selEnd = getSelectionEnd();
                 std::string copyText = text.substr(selStart, selEnd - selStart);
                 SDL_SetClipboardText(copyText.c_str());
             }
@@ -272,7 +272,7 @@ void Editor::showEditor(bool* open)
     // Build lineStartOffsets after input changed text
     lineStartOffsets.clear();
     lineStartOffsets.emplace_back(0);
-    for (size_t i = 0; i < text.size(); i++)
+    for (std::size_t i = 0; i < text.size(); i++)
         if (text[i] == '\n')
             lineStartOffsets.emplace_back(i + 1);
     if (lineStartOffsets.empty())
@@ -281,19 +281,19 @@ void Editor::showEditor(bool* open)
     // RENDERING
     text = controller->getText();
     
-    size_t numCharsRendered = 0;
+    std::size_t numCharsRendered = 0;
 
-    for (size_t lineIndex = 0; lineIndex < lineStartOffsets.size(); ++lineIndex)
+    for (std::size_t lineIndex = 0; lineIndex < lineStartOffsets.size(); ++lineIndex)
     {
-        size_t lineStart = lineStartOffsets[lineIndex];        
-        size_t lineEnd;
+        std::size_t lineStart = lineStartOffsets[lineIndex];        
+        std::size_t lineEnd;
         
         if (lineIndex + 1 < lineStartOffsets.size())
             lineEnd = lineStartOffsets[lineIndex + 1];
         else
             lineEnd = text.size();
         
-        size_t len = lineEnd - lineStart;
+        std::size_t len = lineEnd - lineStart;
         
         std::string lineBuffer = text.substr(lineStart, len);
         ImVec2 linePos = ImVec2(baseX, baseY + lineIndex * lineHeight);
@@ -303,8 +303,8 @@ void Editor::showEditor(bool* open)
 
     // Cursor line/column
     auto it = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), cursorPos);
-    size_t cursorLine = std::distance(lineStartOffsets.begin(), it) - 1;
-    size_t cursorColumn = cursorPos - lineStartOffsets[cursorLine];
+    std::size_t cursorLine = std::distance(lineStartOffsets.begin(), it) - 1;
+    std::size_t cursorColumn = cursorPos - lineStartOffsets[cursorLine];
 
     float visualCursorX = baseX + cursorColumn * charWidth;
     float visualCursorY = baseY + cursorLine * lineHeight;
@@ -326,17 +326,17 @@ void Editor::showEditor(bool* open)
     {
         ImU32 bg_color = ImGui::GetColorU32(ImGuiCol_TextSelectedBg, 0.6f);
         
-        size_t selStart = getSelectionStart();
-        size_t selEnd = getSelectionEnd();
+        std::size_t selStart = getSelectionStart();
+        std::size_t selEnd = getSelectionEnd();
         
         // Find line/column for start and end positions
         auto startIt = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), selStart);
-        size_t startLine = std::distance(lineStartOffsets.begin(), startIt) - 1;
-        size_t startColumn = selStart - lineStartOffsets[startLine];
+        std::size_t startLine = std::distance(lineStartOffsets.begin(), startIt) - 1;
+        std::size_t startColumn = selStart - lineStartOffsets[startLine];
         
         auto endIt = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), selEnd);
-        size_t endLine = std::distance(lineStartOffsets.begin(), endIt) - 1;
-        size_t endColumn = selEnd - lineStartOffsets[endLine];
+        std::size_t endLine = std::distance(lineStartOffsets.begin(), endIt) - 1;
+        std::size_t endColumn = selEnd - lineStartOffsets[endLine];
         
         if (startLine == endLine)
         {
@@ -359,7 +359,7 @@ void Editor::showEditor(bool* open)
             float startY = baseY + startLine * lineHeight;
             
             // Calculate end of first line
-            size_t firstLineEnd = (startLine + 1 < lineStartOffsets.size()) ? 
+            std::size_t firstLineEnd = (startLine + 1 < lineStartOffsets.size()) ? 
                 lineStartOffsets[startLine + 1] - lineStartOffsets[startLine] - 1 : 
                 text.size() - lineStartOffsets[startLine];
             float firstLineEndX = baseX + firstLineEnd * charWidth;
