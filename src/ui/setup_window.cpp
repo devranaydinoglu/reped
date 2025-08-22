@@ -109,7 +109,7 @@ void SetupWindow::showSetupWindow(bool* open)
     if (ImGui::Button("Create Server", ImVec2(columnWidth, 0)))
     {
         if (setupCompletedCallback)
-            setupCompletedCallback(AppMode::SERVER, std::stoi(inputPort), inputAddress, "", filePathName);
+            setupCompletedCallback(AppMode::SERVER, std::stoi(inputPort), inputAddress, "", filePathName.size() > 0 ? filePathName : "");
     }
 
     ImGui::EndChild();

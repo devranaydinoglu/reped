@@ -36,7 +36,10 @@ void Application::onSetupCompleted(AppMode appMode, const uint16_t port, const s
         case AppMode::SERVER:
             server = std::make_unique<Server>(port, serverAddress, controller.get());
             textEngine = std::make_unique<ServerTextEngine>();
-            textEngine->readFile(filePathName);
+
+            if(filePathName.size() > 0)
+                textEngine->readFile(filePathName);
+            
             break;
         default:
             return;
