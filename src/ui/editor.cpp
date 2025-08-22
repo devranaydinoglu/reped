@@ -7,7 +7,9 @@
 #include "../text_engine/input_events.h"
 
 Editor::Editor()
-    : controller(nullptr), cursorLastMovedTime(0.0f), isDragging(false), selectionStartPos(0), selectionEndPos(0), lineScrollOffsetY(0)
+    : controller(nullptr), cursorLastMovedTime(0.0f), isDragging(false),
+        selectionStartPos(0), selectionEndPos(0), lineScrollOffsetY(0),
+        charScrollOffsetX(0)
 {
 }
 
@@ -283,7 +285,7 @@ void Editor::showEditor(bool* open)
     if (lineStartOffsets.empty())
         lineStartOffsets.emplace_back(text.size());
 
-    // Scrolling
+    // Vertical scrolling
     std::size_t maxRenderableLines = textAreaSize.y / lineHeight - 1;
 
     auto cursorLinePosIt = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), cursorPos);
@@ -293,6 +295,22 @@ void Editor::showEditor(bool* open)
         lineScrollOffsetY = cursorLinePos - maxRenderableLines + 1;
     else if (cursorLinePos < lineScrollOffsetY && lineScrollOffsetY > 0)
         lineScrollOffsetY = cursorLinePos;
+
+    // Horizontal scrolling
+    std::size_t maxRenderableChars = textAreaSize.x / charWidth - 2; // -2 for margin
+    std::size_t cursorColumn = cursorPos - lineStartOffsets[cursorLinePos];
+
+    if (cursorColumn >= maxRenderableChars + charScrollOffsetX - rightScrollThreshold)
+    {
+        charScrollOffsetX = cursorColumn - maxRenderableChars + rightScrollMargin;
+    }
+    else if (charScrollOffsetX > 0 && cursorColumn < charScrollOffsetX + leftScrollThreshold)
+    {
+        if (cursorColumn > leftScrollMargin)
+            charScrollOffsetX = cursorColumn - leftScrollMargin;
+        else
+            charScrollOffsetX = 0;
+    }
 
     // RENDERING
     text = controller->getText();
@@ -313,7 +331,14 @@ void Editor::showEditor(bool* open)
         
         std::size_t len = lineEnd - lineStart;
         
-        std::string lineBuffer = text.substr(lineStart, len);
+        // Don't skip any characters if line is shorter than scroll offset
+        if (charScrollOffsetX >= len)
+            continue;
+        
+        // Calculate visible length after horizontal scrolling
+        std::size_t visibleLen = std::min(len - charScrollOffsetX, maxRenderableChars);
+        
+        std::string lineBuffer = text.substr(lineStart + charScrollOffsetX, visibleLen);
         ImVec2 linePos = ImVec2(baseX, baseY + lineIndex * lineHeight);
         drawList->AddText(linePos, IM_COL32_WHITE, lineBuffer.c_str());
         numCharsRendered += lineBuffer.size();
@@ -322,21 +347,28 @@ void Editor::showEditor(bool* open)
     // Cursor line/column
     auto it = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), cursorPos);
     std::size_t cursorLine = std::distance(lineStartOffsets.begin(), it) - 1;
-    std::size_t cursorColumn = cursorPos - lineStartOffsets[cursorLine];
+    cursorColumn = cursorPos - lineStartOffsets[cursorLine];
 
-    float visualCursorX = baseX + cursorColumn * charWidth;
-    float visualCursorY = baseY + (cursorLine - lineScrollOffsetY) * lineHeight;
-
-    // Draw blinking cursor
-    float timeSinceMove = ImGui::GetTime() - cursorLastMovedTime;
-    bool showCursor = (timeSinceMove < 0.5f) || (static_cast<int>((ImGui::GetTime() * 2.0f)) % 2 == 0);
-
-    if (showCursor)
+    // Only draw cursor if it's in the visible area
+    if (cursorLine >= lineScrollOffsetY && 
+        cursorLine < lineScrollOffsetY + numLinesToRender &&
+        cursorColumn >= charScrollOffsetX && 
+        cursorColumn < charScrollOffsetX + maxRenderableChars)
     {
-        drawList->AddLine(
-            ImVec2(visualCursorX, visualCursorY),
-            ImVec2(visualCursorX, visualCursorY + lineHeight),
-            IM_COL32_WHITE, 1.0f);
+        float visualCursorX = baseX + (cursorColumn - charScrollOffsetX) * charWidth;
+        float visualCursorY = baseY + (cursorLine - lineScrollOffsetY) * lineHeight;
+
+        // Draw blinking cursor
+        float timeSinceMove = ImGui::GetTime() - cursorLastMovedTime;
+        bool showCursor = (timeSinceMove < 0.5f) || (static_cast<int>((ImGui::GetTime() * 2.0f)) % 2 == 0);
+
+        if (showCursor)
+        {
+            drawList->AddLine(
+                ImVec2(visualCursorX, visualCursorY),
+                ImVec2(visualCursorX, visualCursorY + lineHeight),
+                IM_COL32_WHITE, 1.0f);
+        }
     }
 
     // Draw text selection highlight
@@ -359,8 +391,11 @@ void Editor::showEditor(bool* open)
         if (startLine == endLine)
         {
             // Single line selection
-            float startX = baseX + startColumn * charWidth;
-            float endX = baseX + endColumn * charWidth;
+            float startX = baseX + (startColumn > charScrollOffsetX ? 
+                (startColumn - charScrollOffsetX) * charWidth : 0);
+            float endX = baseX + (endColumn > charScrollOffsetX ? 
+                (endColumn - charScrollOffsetX) * charWidth : 0);
+            
             float y = baseY + (startLine - lineScrollOffsetY) * lineHeight;
             
             drawList->AddRectFilled(
@@ -373,29 +408,46 @@ void Editor::showEditor(bool* open)
         {
             // Multi-line selection
             // First line: from start column to end of line
-            float startX = baseX + startColumn * charWidth;
-            float startY = baseY + (startLine - lineScrollOffsetY) * lineHeight;
-            
-            // Calculate end of first line
-            std::size_t firstLineEnd = (startLine + 1 < lineStartOffsets.size()) ? 
-                lineStartOffsets[startLine + 1] - lineStartOffsets[startLine] - 1 : 
-                text.size() - lineStartOffsets[startLine];
-            float firstLineEndX = baseX + firstLineEnd * charWidth;
-            
-            drawList->AddRectFilled(
-                ImVec2(startX, startY),
-                ImVec2(firstLineEndX, startY + lineHeight),
-                bg_color
-            );
+            if (startLine >= lineScrollOffsetY && startLine < lineScrollOffsetY + numLinesToRender)
+            {
+                // Account for horizontal scrolling in first line
+                float startX = baseX;
+                if (startColumn > charScrollOffsetX)
+                    startX = baseX + (startColumn - charScrollOffsetX) * charWidth;
+                
+                float startY = baseY + (startLine - lineScrollOffsetY) * lineHeight;
+                
+                // Calculate end of first line
+                std::size_t firstLineEnd = (startLine + 1 < lineStartOffsets.size()) ? 
+                    lineStartOffsets[startLine + 1] - lineStartOffsets[startLine] - 1 : 
+                    text.size() - lineStartOffsets[startLine];
+                
+                // Adjust for horizontal scroll
+                float firstLineEndX = baseX;
+                if (firstLineEnd > charScrollOffsetX)
+                    firstLineEndX = baseX + (firstLineEnd - charScrollOffsetX) * charWidth;
+                
+                drawList->AddRectFilled(
+                    ImVec2(startX, startY),
+                    ImVec2(firstLineEndX, startY + lineHeight),
+                    bg_color
+                );
+            }
             
             // Middle lines: full width
-            for (size_t line = std::max(startLine + 1, lineScrollOffsetY); line < std::min(endLine, lineScrollOffsetY + numLinesToRender); ++line)
+            for (size_t line = std::max(startLine + 1, lineScrollOffsetY); 
+                line < std::min(endLine, lineScrollOffsetY + numLinesToRender); 
+                ++line)
             {
                 float y = baseY + (line - lineScrollOffsetY) * lineHeight;
                 size_t lineLength = (line + 1 < lineStartOffsets.size()) ?
                     lineStartOffsets[line + 1] - lineStartOffsets[line] - 1 :
                     text.size() - lineStartOffsets[line];
-                float lineEndX = baseX + lineLength * charWidth;
+                
+                // Account for horizontal scrolling
+                float lineEndX = baseX;
+                if (lineLength > charScrollOffsetX)
+                    lineEndX = baseX + (lineLength - charScrollOffsetX) * charWidth;
                 
                 drawList->AddRectFilled(
                     ImVec2(baseX, y),
@@ -405,14 +457,21 @@ void Editor::showEditor(bool* open)
             }
             
             // Last line: from start of line to end column
-            float endX = baseX + endColumn * charWidth;
-            float endY = baseY + (endLine - lineScrollOffsetY) * lineHeight;
-            
-            drawList->AddRectFilled(
-                ImVec2(baseX, endY),
-                ImVec2(endX, endY + lineHeight),
-                bg_color
-            );
+            if (endLine >= lineScrollOffsetY && endLine < lineScrollOffsetY + numLinesToRender)
+            {
+                // Account for horizontal scrolling
+                float endX = baseX;
+                if (endColumn > charScrollOffsetX)
+                    endX = baseX + (endColumn - charScrollOffsetX) * charWidth;
+                
+                float endY = baseY + (endLine - lineScrollOffsetY) * lineHeight;
+                
+                drawList->AddRectFilled(
+                    ImVec2(baseX, endY),
+                    ImVec2(endX, endY + lineHeight),
+                    bg_color
+                );
+            }
         }
     }
 
@@ -504,10 +563,10 @@ std::size_t Editor::mousePosToCharPos(float baseX, float baseY, float charWidth,
     std::size_t xIndex = (ImGui::GetMousePos().x - baseX) / charWidth;
     std::size_t yIndex = (ImGui::GetMousePos().y - baseY) / lineHeight;
     
-    // Add scroll offset to calculate the actual line in the document
+    // Add scroll offsets to calculate the actual position in the document
+    xIndex += charScrollOffsetX;
     yIndex += lineScrollOffsetY;
     
-    // Ensure we don't go beyond the available lines
     yIndex = std::min(yIndex, lineStartOffsets.size() - 1);
 
     std::size_t lineLength;

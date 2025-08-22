@@ -23,6 +23,11 @@ private:
 
     // Scrolling
     std::size_t lineScrollOffsetY;
+    std::size_t charScrollOffsetX;
+    const std::size_t leftScrollThreshold = 5;
+    const std::size_t rightScrollThreshold = 5;
+    const std::size_t leftScrollMargin = 5;
+    const std::size_t rightScrollMargin = 5;
 
 public:
     Editor();
