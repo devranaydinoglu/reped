@@ -1,6 +1,6 @@
 # Reped
 
-Reped is a real-time collaborative text editor written in C++ that utilizes a client-server networking architecture to synchronize text changes across clients and Dear ImGUI to render its UI. It has a custom piece table implementation for its text buffer for efficient insertions and deletions, along with full undo/redo support. It uses OT for conflict resolution to ensure that concurrent text operations are handled properly by the server and clients.
+Reped is a real-time collaborative text editor written in C++ that utilizes a client-server networking architecture to synchronize text changes across clients and Dear ImGUI to render its UI. It has a custom piece table implementation for its text buffer for efficient insertions and deletions. It uses OT for conflict resolution to ensure that concurrent text operations are handled properly by the server and clients.
 
 ## Text Buffer
 
@@ -39,7 +39,7 @@ An insertion is handled by splitting the span into three spans. The first span p
 
 ## Conflict Resolution
 
-### CRDT (Conflict-free Replicated Data Types)
+### CRDT (Conflict-Free Replicated Data Types)
 
 CRDT is an approach to conflict resolution that provides automatic conflict resolution without requiring complex transformation algorithms. Each character in the document gets a unique identifier that includes information about when and where it was created. When multiple clients edit the same document simultaneously, these identifiers allow the system to automatically determine the correct order of characters.
 
