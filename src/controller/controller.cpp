@@ -162,3 +162,12 @@ std::unique_ptr<Operation> Controller::processIncomingMessage(const std::string 
 
     return nullptr;
 }
+
+std::string Controller::getClientId() const
+{
+    if (client)
+    {
+        return client->getClientId();
+    }
+    return "Server";
+}

@@ -25,6 +25,7 @@ public:
     void setCursorPosition(std::size_t position);
     void setInitialDocument(const std::string& str);
     std::unique_ptr<Operation> processIncomingMessage(const std::string& message);
+    std::string getClientId() const;
 
 private:
     void processLocalOperation(std::unique_ptr<Operation> operation);

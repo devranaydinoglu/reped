@@ -52,4 +52,10 @@ private:
      * Handles acknowledgment messages from the server
      */
     void handleAckMessage(const std::string& message);
+
+public:
+    std::string getClientId() const
+    {
+        return clientId;
+    }
 };
