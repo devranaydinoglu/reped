@@ -21,6 +21,8 @@ private:
     std::size_t selectionStartPos;
     std::size_t selectionEndPos;
 
+    std::size_t lineScrollOffsetY;
+
 public:
     Editor();
     void showEditor(bool* open);
@@ -30,6 +32,7 @@ public:
 private:
     void onCursorMoved();
     std::size_t mousePosToCharPos(float baseX, float baseY, float charWidth, float lineHeight, std::size_t textLength);
+    std::size_t validateCursorPosition(std::size_t pos, const std::string& text);
 
     // Text selection
     bool hasSelection() const;
