@@ -38,7 +38,10 @@ public:
 private:
     void onCursorMoved();
     std::size_t mousePosToCharPos(float baseX, float baseY, float charWidth, float lineHeight, std::size_t textLength);
-    std::size_t validateCursorPosition(std::size_t pos, const std::string& text);
+
+    // Input handling
+    void handleKeyboardInput(std::size_t& cursorPos, std::string_view text);
+    void handleMouseInput(float baseX, float baseY, float charWidth, float lineHeight, std::size_t textLength);
 
     // Text selection
     bool hasSelection() const;
