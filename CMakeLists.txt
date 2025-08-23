@@ -20,6 +20,7 @@ set(SOURCES
     src/text_engine/client_text_engine.cpp
     src/text_engine/server_text_engine.cpp
     src/text_engine/operations.cpp
+    src/networking/message_parser.cpp
 
     lib/ImGuiFileDialog/ImGuiFileDialog.cpp
 )
