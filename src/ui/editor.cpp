@@ -381,6 +381,7 @@ void Editor::handleKeyboardInput(std::size_t& cursorPos, std::string_view text)
 {
     // Text input is handled via SDL events in handleTextInput()
     // Only special keys are handled here
+    // Handle horizontal arrow navigation and text selection
     if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && cursorPos > 0)
     {            
         if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift))
@@ -433,6 +434,7 @@ void Editor::handleKeyboardInput(std::size_t& cursorPos, std::string_view text)
     std::size_t currentLine = std::distance(lineStartOffsets.begin(), it) - 1;
     std::size_t column = cursorPos - lineStartOffsets[currentLine];
 
+    // Handle vertical arrow navigation and text selection
     if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) && currentLine > 0)
     {
         std::size_t prevLineStart = lineStartOffsets[currentLine - 1];
@@ -509,6 +511,7 @@ void Editor::handleKeyboardInput(std::size_t& cursorPos, std::string_view text)
         }
     }
 
+    // Handle delete
     if (ImGui::IsKeyPressed(ImGuiKey_Backspace))
     {
         if (hasSelection())
@@ -525,6 +528,7 @@ void Editor::handleKeyboardInput(std::size_t& cursorPos, std::string_view text)
         }
     }
 
+    // Handle new line
     if (ImGui::IsKeyPressed(ImGuiKey_Enter))
     {
         controller->handleTextInputEvent(TextInputEvent(TextInputEventType::INSERT, "\n", cursorPos));
@@ -544,6 +548,7 @@ void Editor::handleKeyboardInput(std::size_t& cursorPos, std::string_view text)
             SDL_SetClipboardText(copyText.c_str());
         }
     }
+
     // Handle paste
     if ((ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl)) && ImGui::IsKeyPressed(ImGuiKey_V))
     {
@@ -563,6 +568,17 @@ void Editor::handleKeyboardInput(std::size_t& cursorPos, std::string_view text)
         {
             SDL_free(clipboardText);
         }
+    }
+
+    // Handle select all
+    if ((ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl)) && ImGui::IsKeyPressed(ImGuiKey_A))
+    {
+        selectionStartPos = 0;
+        selectionEndPos = text.size();
+
+        controller->handleCursorInputEvent(CursorInputEvent(text.size()));
+        cursorPos = controller->getCursorPosition();
+        cursorLastMovedTime = ImGui::GetTime();
     }
 }
 
