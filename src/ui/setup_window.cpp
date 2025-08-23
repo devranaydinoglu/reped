@@ -7,7 +7,7 @@
 #include "../application.h"
 
 SetupWindow::SetupWindow()
-    : inputClientId(""), inputPort("8080"), inputAddress("localhost")
+    : inputClientId(""), inputClientPort("8080"), inputClientAddress("localhost"), inputServerPort("8080"), inputServerAddress("localhost"), filePathName("")
 {
 }
 
@@ -62,14 +62,14 @@ void SetupWindow::showSetupWindow(bool* open)
         ImGui::Text("Port");
         ImGui::TableSetColumnIndex(1);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGui::InputText("##ServerPort", inputPort, IM_ARRAYSIZE(inputPort));
+        ImGui::InputText("##ServerPort", inputServerPort, IM_ARRAYSIZE(inputServerPort));
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
         ImGui::Text("Address");
         ImGui::TableSetColumnIndex(1);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGui::InputText("##ServerAddress", inputAddress, IM_ARRAYSIZE(inputAddress));
+        ImGui::InputText("##ServerAddress", inputServerAddress, IM_ARRAYSIZE(inputServerAddress));
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
@@ -96,21 +96,39 @@ void SetupWindow::showSetupWindow(bool* open)
         ImGuiFileDialog::Instance()->Close();
     }
 
-    ImGui::Dummy(ImVec2(0.0f, 20.0f));
+    ImGui::Dummy(ImVec2(0.0f, 10.0f));
     
     // Display selected file
     if (!filePathName.empty()) {
         std::string filename = filePathName.substr(filePathName.find_last_of("/\\") + 1);
         ImGui::TextWrapped("Selected: %s", filename.c_str());
-        ImGui::Dummy(ImVec2(0.0f, 20.0f));
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
     }
 
-    // Full width server button with a small margin on sides
+    ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+    // Input field validation
+    bool serverPortValid = strlen(inputServerPort) > 0;
+    bool serverAddressValid = strlen(inputServerAddress) > 0;
+    bool allServerFieldsValid = serverPortValid && serverAddressValid;
+    
+    // Show validation messages if fields are empty
+    if (!allServerFieldsValid) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+        ImGui::TextWrapped("All fields are required");
+        ImGui::PopStyleColor();
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+    }
+    
+    ImGui::BeginDisabled(!allServerFieldsValid);
+
     if (ImGui::Button("Create Server", ImVec2(columnWidth, 0)))
     {
         if (setupCompletedCallback)
-            setupCompletedCallback(AppMode::SERVER, std::stoi(inputPort), inputAddress, "", filePathName.size() > 0 ? filePathName : "");
+            setupCompletedCallback(AppMode::SERVER, std::stoi(inputServerPort), inputServerAddress, "", filePathName.size() > 0 ? filePathName : "");
     }
+
+    ImGui::EndDisabled();
 
     ImGui::EndChild();
     
@@ -150,26 +168,43 @@ void SetupWindow::showSetupWindow(bool* open)
         ImGui::Text("Port");
         ImGui::TableSetColumnIndex(1);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGui::InputText("##ClientPort", inputPort, IM_ARRAYSIZE(inputPort));
+        ImGui::InputText("##ClientPort", inputClientPort, IM_ARRAYSIZE(inputClientPort));
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
         ImGui::Text("Address");
         ImGui::TableSetColumnIndex(1);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGui::InputText("##ClientAddress", inputAddress, IM_ARRAYSIZE(inputAddress));
+        ImGui::InputText("##ClientAddress", inputClientAddress, IM_ARRAYSIZE(inputClientAddress));
 
         ImGui::EndTable();
     }
 
-    ImGui::Dummy(ImVec2(0.0f, 20.0f));
+    ImGui::Dummy(ImVec2(0.0f, 10.0f));
     
-    // Full width client button with a small margin on sides
+    // Input field validation
+    bool clientIdValid = strlen(inputClientId) > 0;
+    bool clientPortValid = strlen(inputClientPort) > 0;
+    bool clientAddressValid = strlen(inputClientAddress) > 0;
+    bool allClientFieldsValid = clientIdValid && clientPortValid && clientAddressValid;
+    
+    // Show validation messages if fields are empty
+    if (!allClientFieldsValid) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+        ImGui::TextWrapped("All fields are required");
+        ImGui::PopStyleColor();
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+    }
+    
+    ImGui::BeginDisabled(!allClientFieldsValid);
+
     if (ImGui::Button("Connect As Client", ImVec2(columnWidth, 0)))
     {
         if (setupCompletedCallback)
-            setupCompletedCallback(AppMode::CLIENT, std::stoi(inputPort), inputAddress, std::string(inputClientId), "");
+            setupCompletedCallback(AppMode::CLIENT, std::stoi(inputClientPort), inputClientAddress, std::string(inputClientId), "");
     }
+
+    ImGui::EndDisabled();
 
     ImGui::EndChild();
     ImGui::End();

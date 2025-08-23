@@ -11,8 +11,11 @@ public:
 
 private:
     char inputClientId[20];
-    char inputPort[6];
-    char inputAddress[18];
+    char inputClientPort[6];
+    char inputClientAddress[18];
+
+    char inputServerPort[6];
+    char inputServerAddress[18];
     std::string filePathName;
 
 public:
