@@ -81,10 +81,17 @@ void Editor::showEditor(bool* open)
     auto cursorLinePosIt = std::upper_bound(lineStartOffsets.begin(), lineStartOffsets.end(), cursorPos);
     std::size_t cursorLinePos = std::distance(lineStartOffsets.begin(), cursorLinePosIt) - 1;
     
-    if (cursorLinePos >= maxRenderableLines + lineScrollOffsetY - 1)
-        lineScrollOffsetY = cursorLinePos - maxRenderableLines + 1;
-    else if (cursorLinePos < lineScrollOffsetY && lineScrollOffsetY > 0)
-        lineScrollOffsetY = cursorLinePos;
+    if (cursorLinePos >= maxRenderableLines + lineScrollOffsetY - downScrollThreshold)
+    {
+        lineScrollOffsetY = cursorLinePos - maxRenderableLines + downScrollMargin;
+    }
+    else if (lineScrollOffsetY > 0 && cursorLinePos <= lineScrollOffsetY + upScrollThreshold)
+    {
+        if (cursorLinePos > upScrollMargin)
+            lineScrollOffsetY = cursorLinePos - upScrollMargin;
+        else
+            lineScrollOffsetY = 0;
+    }
 
     // Horizontal scrolling
     std::size_t maxRenderableChars = textAreaSize.x / charWidth - 2; // -2 for margin

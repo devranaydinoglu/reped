@@ -26,8 +26,12 @@ private:
     std::size_t charScrollOffsetX;
     const std::size_t leftScrollThreshold = 5;
     const std::size_t rightScrollThreshold = 5;
+    const std::size_t downScrollThreshold = 5;
+    const std::size_t upScrollThreshold = 5;
     const std::size_t leftScrollMargin = 5;
     const std::size_t rightScrollMargin = 5;
+    const std::size_t downScrollMargin = 5;
+    const std::size_t upScrollMargin = 5;
 
 public:
     Editor();
