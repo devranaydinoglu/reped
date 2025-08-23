@@ -11,6 +11,7 @@
 #include "server.h"
 #include "../text_engine/operations.h"
 #include "../controller/controller.h"
+#include "message_parser.h"
 
 Server::Server(const uint16_t port, const std::string& bindAddress, Controller* controller)
     : port(port), bindAddress(bindAddress), socketFd(0), running(false), controller(controller)
@@ -139,7 +140,7 @@ void Server::handleClient(int clientSocket)
         buffer[bytesReceived] = '\0';
         std::string msg(buffer);
         
-        ParsedMessage parsedMsg = parseMessage(msg);
+        ParsedMessage parsedMsg = MessageParser::parseMessage(msg);
         
         std::string displayClientId = parsedMsg.clientId;
         if (displayClientId == "UNKNOWN")
@@ -179,43 +180,6 @@ void Server::broadcastToClients(const std::string& message, int excludeSocket)
     }
 }
 
-ParsedMessage Server::parseMessage(const std::string& message)
-{
-    ParsedMessage parsed;
-
-    std::istringstream ss(message);
-    std::string token;
-
-    std::vector<std::string> parts;
-    while (std::getline(ss, token, ':'))
-        parts.push_back(token);
-
-    if (message.size() >= 10 && message.substr(0, 10) == "CONNECTED:")
-    {
-        parsed.type = MessageType::CONNECTED;
-        parsed.clientId = message.substr(10);
-        parsed.content = message;
-        return parsed;
-    }
-    
-    if (parts.size() >= 2)
-    {
-        if (parts[0] == "INSERT" || parts[0] == "DELETE")
-        {
-            parsed.type = MessageType::OPERATION;
-            parsed.clientId = parts[1];
-            parsed.content = message;
-            return parsed;
-        }
-    }
-    
-    // Default to unknown message type
-    parsed.type = MessageType::UNKNOWN;
-    parsed.clientId = "UNKNOWN";
-    parsed.content = message;
-    return parsed;
-}
-
 void Server::handleParsedMessage(const ParsedMessage& parsedMsg, int clientSocket)
 {
     switch (parsedMsg.type)
@@ -229,12 +193,12 @@ void Server::handleParsedMessage(const ParsedMessage& parsedMsg, int clientSocke
             std::cout << "Client " << clientSocket << " connected with ID: " << parsedMsg.clientId << "\n";
             
             std::string text = controller->getText();
-            std::string initMsg = "INIT_DOCUMENT:" + text;
+            std::string initMsg = MessageParser::createInitDocumentMessage(text);
             send(clientSocket, initMsg.c_str(), initMsg.length(), 0);
             std::cout << "Server: Sent initial document to client " << parsedMsg.clientId << "\n";
             break;
         }
-            
+        
         case MessageType::OPERATION:
         {
             std::unique_ptr<Operation> operation = Operation::deserialize(parsedMsg.content);
@@ -244,7 +208,7 @@ void Server::handleParsedMessage(const ParsedMessage& parsedMsg, int clientSocke
                 return;
             }
 
-            // Apply to authoritative document through controller
+            // Apply to authoritative document
             std::unique_ptr<Operation> transformedOp = controller->processIncomingMessage(parsedMsg.content);
             if (transformedOp) {
                 std::string opMsg = transformedOp->serialize();

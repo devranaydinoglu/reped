@@ -12,6 +12,7 @@
 #include "../controller/controller.h"
 #include "../text_engine/operations.h"
 #include "../text_engine/client_text_engine.h"
+#include "message_parser.h"
 
 Client::Client(const uint16_t port, const std::string& serverAddress, Controller* controller, const std::string& clientId)
     : port(port), serverAddress(serverAddress), socketFd(0), running(false), controller(controller), clientId(clientId)
@@ -53,7 +54,7 @@ void Client::connect()
             std::cout << "Client started on port " << port << " and connected to server at " << serverAddress << "\n";
             connected = true;
             
-            std::string connectedMsg = "CONNECTED:" + clientId;
+            std::string connectedMsg = MessageParser::createConnectedMessage(clientId);
             if (sendMessage(connectedMsg))
                 std::cout << "Client: Sent operation to server: " << connectedMsg << "\n";
             else
@@ -112,23 +113,29 @@ void Client::receiveMessages()
         }
 
         buffer[bytesReceived] = '\0';
-        std::string message(buffer);
+        std::string msg(buffer);
         
-        std::cout << "Received: " << message << "\n";
-    
-        if (message.size() >= 13 && message.substr(0, 14) == "INIT_DOCUMENT:")
-        {
-            std::string initialContent = message.substr(14);
-            controller->setInitialDocument(initialContent);
-        }
-        else if (isAckMessage(message))
-        {
-            handleAckMessage(message);            
-        }
-        else
-        {
-            controller->processIncomingMessage(message);
-        }
+        std::cout << "Received: " << msg << "\n";
+
+        ParsedMessage parsedMsg = MessageParser::parseMessage(msg);
+        handleParsedMessage(parsedMsg);
+    }
+}
+
+void Client::handleParsedMessage(const ParsedMessage& parsedMsg)
+{
+    if (parsedMsg.type == MessageType::INIT_DOCUMENT)
+    {
+        std::string initialContent = parsedMsg.content.substr(14);
+        controller->setInitialDocument(initialContent);
+    }
+    else if (isAckMessage(parsedMsg.content))
+    {
+        handleAckMessage(parsedMsg.content);            
+    }
+    else
+    {
+        controller->processIncomingMessage(parsedMsg.content);
     }
 }
 
@@ -160,7 +167,8 @@ void Client::handleAckMessage(const std::string& message)
         return;
     }
     
-    if (operation->type == OperationType::INSERT || operation->type == OperationType::DELETE) {
+    if (operation->type == OperationType::INSERT || operation->type == OperationType::DELETE)
+    {
         auto textOp = static_cast<TextOperation*>(operation.get());
         
         ClientTextEngine* clientEngine = dynamic_cast<ClientTextEngine*>(controller->textEngine);

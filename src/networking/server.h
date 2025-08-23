@@ -9,21 +9,7 @@
 #include <unordered_map>
 
 class Controller;
-
-enum class MessageType
-{
-    UNKNOWN,
-    CONNECTED,
-    OPERATION,
-    INIT_DOCUMENT
-};
-
-struct ParsedMessage
-{
-    MessageType type;
-    std::string content;
-    std::string clientId; // For CONNECTED messages
-};
+struct ParsedMessage;
 
 class Server {
 public:
@@ -66,6 +52,5 @@ private:
     */
     void broadcastToClients(const std::string& message, int excludeSocket = -1);
 
-    ParsedMessage parseMessage(const std::string& message);
     void handleParsedMessage(const ParsedMessage& parsedMsg, int clientSocket);
 };

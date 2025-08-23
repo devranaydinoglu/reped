@@ -7,6 +7,7 @@
 #include <functional>
 
 class Controller;
+struct ParsedMessage;
 
 class Client
 {
@@ -43,14 +44,8 @@ private:
     */
     void receiveMessages();
     
-    /**
-     * Checks if a received message is an acknowledgment for this client's operation
-     */
+    void handleParsedMessage(const ParsedMessage& parsedMsg);
     bool isAckMessage(const std::string& message) const;
-    
-    /**
-     * Handles acknowledgment messages from the server
-     */
     void handleAckMessage(const std::string& message);
 
 public:
