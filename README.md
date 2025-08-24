@@ -15,8 +15,6 @@ Reped is a real-time collaborative text editor written in C++ that utilizes a cl
 
 ## Text Buffer
 
-There are various ways to implement a text buffer. It can use a naive approach with a string or array, or more efficient and robust data structures that have already been tried-and-tested in existing editors. Below I will briefly explain how gap buffers, ropes, and piece tables (my choice), examples of efficient and robust data structures that have already been tried-and-tested in existing editors, work.
-
 There are several ways to implement a text buffer for a text editor. A naïve yet simple approach is to use a string or array, but more efficient and reliable methods exist. Below, I’ll briefly explain how gap buffers, ropes, and piece tables (my preferred choice) work, all of which are well-tested and efficient data structures used in established text/code editors.
 
 ### Gap Buffer
