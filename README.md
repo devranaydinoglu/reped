@@ -2,6 +2,17 @@
 
 Reped is a real-time collaborative text editor written in C++ that utilizes a client-server networking architecture to synchronize text changes across clients and Dear ImGUI to render its UI. It has a custom piece table implementation for its text buffer for efficient insertions and deletions. It uses OT for conflict resolution to ensure that concurrent text operations are handled properly by the server and clients.
 
+## Supported Controls
+
+- ASCII characters
+- Up, right, downm left navigation (arrows)
+- Delete (backspace)
+- New line (enter)
+- Text selection (shift + arrows / mouse drag)
+- Copy (ctrl + c)
+- Paste (ctrl + v)
+- Select all (ctrl + a)
+
 ## Text Buffer
 
 There are various ways to implement a text buffer. It can use a naive approach with a string or array, or more efficient and robust data structures that have already been tried-and-tested in existing editors. Below I will briefly explain how gap buffers, ropes, and piece tables (my choice), examples of efficient and robust data structures that have already been tried-and-tested in existing editors, work.
