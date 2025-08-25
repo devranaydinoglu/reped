@@ -24,7 +24,7 @@ public:
     void insertIncoming(InsertOperation* insertOp);
     void deleteLocal(DeleteOperation* deleteOp);
     void deleteIncoming(DeleteOperation* deleteOp);
-    void setCursorPosition(std::size_t position);
+    void setCursorPosition(std::size_t pos);
     [[nodiscard]] std::size_t getCursorPosition() const;
     [[nodiscard]] std::string getText() const;
     [[nodiscard]] std::size_t getDocumentLength() const;

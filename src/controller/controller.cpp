@@ -16,22 +16,20 @@ Controller::Controller()
 
 int Controller::handleTextInputEvent(const TextInputEvent& event)
 {    
-    switch (event.type) {
+    switch (event.type)
+    {
         case TextInputEventType::INSERT:
         {
-            std::cout << "Controller: INSERT operation - text '" << event.text << "' at position " << event.pos << "\n";
             processLocalOperation(std::make_unique<InsertOperation>(event.text, event.pos, client->clientId));
             break;
         }
         case TextInputEventType::DELETE:
         {
-            std::cout << "Controller: DELETE operation at position " << event.pos << "\n";
             processLocalOperation(std::make_unique<DeleteOperation>(event.pos, event.length, client->clientId));
             break;
         }
-        default: {
+        default:
             return 1;
-        }
     }
     
     return 0;
@@ -39,7 +37,6 @@ int Controller::handleTextInputEvent(const TextInputEvent& event)
 
 int Controller::handleCursorInputEvent(const CursorInputEvent& event)
 {
-    std::cout << "Controller: CURSOR_MOVE operation to position " << event.pos << "\n";
     processLocalOperation(std::make_unique<CursorMoveOperation>(event.pos));
 
     return 0;
@@ -96,7 +93,8 @@ void Controller::processLocalOperation(std::unique_ptr<Operation> operation)
 
 void Controller::sendOperationToClient(const Operation& operation)
 {
-    if (!client) {
+    if (!client)
+    {
         std::cerr << "Controller: Client not set\n";
         return;
     }
@@ -108,11 +106,10 @@ void Controller::sendOperationToClient(const Operation& operation)
     }
 
     std::string serialized = operation.serialize();
-    if (client->sendMessage(serialized)) {
+    if (client->sendMessage(serialized))
         std::cout << "Controller: Sent operation to client: " << serialized << "\n";
-    } else {
+    else
         std::cerr << "Controller: Failed to send operation to client: " << serialized << "\n";
-    }
 }
 
 std::string Controller::getText() const
@@ -149,9 +146,7 @@ std::unique_ptr<Operation> Controller::processIncomingMessage(const std::string 
 
     ServerTextEngine* serverEngine = dynamic_cast<ServerTextEngine*>(textEngine);
     if (serverEngine)
-    {        
         return serverEngine->processIncomingOperation(std::move(textOp));
-    }
 
     ClientTextEngine* clientEngine = dynamic_cast<ClientTextEngine*>(textEngine);
     if (clientEngine)
@@ -166,8 +161,7 @@ std::unique_ptr<Operation> Controller::processIncomingMessage(const std::string 
 std::string Controller::getClientId() const
 {
     if (client)
-    {
         return client->getClientId();
-    }
+    
     return "Server";
 }
